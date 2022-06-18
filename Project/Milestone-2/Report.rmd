@@ -1,0 +1,540 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Statistical Methods – COSC	6323 - Project-Milestone 2 
+### By Dinesh Narlakanti (2083649) and Adarsh Chagantipati (2054031)
+  
+________________________________________________________________________________  
+ 
+### INTRODUCTION  
+
+A national wide survey of U.S.academics was conducted and around 400 intellectuals from 70 phD granting institutions, who excelled in the competitive grant process participated and filled a Core Questionnaire (CQ) which includes questions on their behavioral characteristics, proposal tactics, time they spend on research, sleep and other important things they do regularly. This survey and analysis of it concludes that long research hours and thoughtful choices are the primary reason for the grantsmanship and academic fame is the secondary reason for grantsmanship. 
+
+This document includes code development, analytic observations and visualization of Number of proposals, Typical Week Research, Extroversion, Agreeableness, Openness, Funding Agency, Break Frequency, Pilot Research, Deadline Stress, Trait Anxiety, Avoidance coping
+
+###GRAPHS
+```{r include= FALSE}
+library(ggplot2)
+library(cowplot)
+g50 <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Project/Milestone-2/Data/G50.csv")
+dd <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Project/Milestone-2/Data/$$.csv")
+d75 <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Project/Milestone-2/Data/$75.csv")
+g30 <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Project/Milestone-2/Data/G30.csv")
+g50dd <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Project/Milestone-2/Data/G50$$.csv")
+
+
+#1
+g30_np <- g30[c(1:3),]
+g30_np$type <- c("NP1","NP2","NP3")
+g30_np$NP <- factor(g30_np$NP, levels = g30_np$NP)
+plot30_np <- ggplot(g30_np, aes(x=type, y=Prediction*100)) + geom_pointrange(aes(ymin=Lower_limit*100, ymax=Upper_limit*100), color = ifelse(g30_np$Prediction > 0.5, "grey", "red"))+ ggtitle("Number of Proposals") +xlab(" ") + ylab("SG30")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+#2
+g30_fa <- g30[c(4:9),]
+g30_fa$FA <- factor(g30_fa$FA, levels = g30_fa$FA)
+plot30_fa <- ggplot(g30_fa, aes(x=FA, y=Prediction*100)) + geom_pointrange(aes(ymin=Lower_limit*100, ymax=Upper_limit*100), color = ifelse(g30_fa$Prediction==0.5654074,"grey",ifelse(g30_fa$Prediction > 0.8, "darkgoldenrod2", "black")))+ ggtitle("Funding Agency") +xlab(" ") + ylab("SG30")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+
+#3
+g30_bf <- data.frame()
+plot30_bf <- ggplot(g30_bf) + geom_point()+geom_blank()+theme_bw()+ggtitle("Break Frequency")
+theme (plot.title = element_text(hjust = 0.5),
+       panel.background = element_rect(fill='transparent'),
+       plot.background = element_rect(fill='transparent', color=NA),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank(),
+       legend.background = element_rect(fill='transparent'),
+       legend.box.background = element_rect(fill='transparent') )
+
+
+#4
+g30_pr <- data.frame()
+plot30_pr <- ggplot(g30_pr) + geom_point()+geom_blank()+theme_bw()+ggtitle("Pilot Research")
+theme (plot.title = element_text(hjust = 0.5),
+       panel.background = element_rect(fill='transparent'),
+       plot.background = element_rect(fill='transparent', color=NA),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank(),
+       legend.background = element_rect(fill='transparent'),
+       legend.box.background = element_rect(fill='transparent') )
+
+
+#G50
+#5
+g50_np <- g50[c(1:3),]
+g50_np$NP <- factor(g50_np$NP, levels = g50_np$NP)
+plot50_np <- ggplot(g50_np, aes(x=NP, y=Pred.*100)) + geom_pointrange(aes(ymin=Lower_L*100, ymax=Upper_L*100), color = ifelse(g50_np$Pred.==0.52496689
+,"grey",ifelse(g50_np$Pred. > 0.2, "darkgoldenrod2", "red")))+xlab(" ") + ylab("SG50")+ ylim(0,100) + theme(
+plot.title = element_text(hjust = 0.5),
+panel.background = element_rect(fill='transparent'),
+plot.background = element_rect(fill='transparent', color=NA),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(),
+legend.background = element_rect(fill='transparent'),
+legend.box.background = element_rect(fill='transparent')
+)
+
+
+#6
+g50_fa <- g50[c(4:9),]
+g50_fa$FA <- factor(g50_fa$FA, levels = g50_fa$FA)
+plot50_fa <- ggplot(g50_fa, aes(x=FA, y=Pred.*100)) + geom_pointrange(aes(ymin=Lower_L*100, ymax=Upper_L*100), color = ifelse(g50_fa$Lower_L == 0.26502507,"grey",ifelse(g50_fa$Pred. < 0.7774556, "black", ifelse(g50_fa$Pred. > 0.8, "darkgoldenrod2", "cyan3")))) +xlab(" ") + ylab("SG50")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+#7
+g50_bf <- g50[c(11:12),]
+g50_bf$type <- c("BF2","BF1")
+plot50_bf <- ggplot(g50_bf, aes(x=type, y=Pred.*100)) + geom_pointrange(aes(ymin=Lower_L*100, ymax=Upper_L*100), color = ifelse(g50_bf$Pred.> 0.7,"cyan3","grey"))+xlab(" ") + ylab("SG50")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+#8
+g50_pr <- g50[c(14:18),]
+g50_pr$type <- c("PR1","PR2","PR3","PR4","PR5")
+plot50_pr <- ggplot(g50_pr, aes(x=type, y=Pred.*100)) + geom_pointrange(aes(ymin=Lower_L*100, ymax=Upper_L*100), color = ifelse(g50_pr$Pred.>  0.5,"grey",ifelse(g50_pr$Pred.< 0.1608640,"darkgoldenrod2","cyan3")))+xlab(" ") + ylab("SG50")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+
+#______________________________________________________________________
+#9    
+g30_h <- g30[c(12:14),]
+plot30_h<- ggplot(g30_h, aes(x=H,y=Prediction*100)) + ylim(0,100)+ xlim(0,200) +
+  geom_point(size = 1,color = 'cyan3') + geom_path(color = 'cyan3', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(g30_h$H),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=g30_h, aes(x=H, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ ggtitle("h-index")+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+#10
+g30_ds <- g30[c(10:11),]
+g30_ds$type <- c("DS1", "DS2")
+plot30_ds <- ggplot(g30_ds, aes(x=type, y=Prediction*100)) + geom_pointrange(aes(ymin=Lower_limit*100, ymax=Upper_limit*100), color = ifelse(g30_ds$Prediction > 0.5,"grey","darkgoldenrod2"))+ ggtitle("Deadline Stress") +xlab(" ") + ylab("SG30")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+#11
+g30_ta <- g30[c(15:17),]
+plot30_ta<- ggplot(g30_ta, aes(x=TA,y=Prediction*100)) + ylim(0,100)+ xlim(20,70) +
+  geom_point(size = 1,color = 'cyan3') + geom_path(color = 'cyan3', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(g30_ta$TA),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=g30_ta, aes(x=TA, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ ggtitle("Trait Anxiety")+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+#12
+g30_e <- data.frame()
+plot30_e <- ggplot(g30_e) + geom_point()+geom_blank()+theme_bw()+ggtitle("Extraversion")
+theme (plot.title = element_text(hjust = 0.5),
+       panel.background = element_rect(fill='transparent'),
+       plot.background = element_rect(fill='transparent', color=NA),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank(),
+       legend.background = element_rect(fill='transparent'),
+       legend.box.background = element_rect(fill='transparent') )
+
+
+#13
+g30_ac <- data.frame()
+plot30_ac <- ggplot(g30_ac) + geom_point()+geom_blank()+theme_bw()+ggtitle("Avoidance coping")
+theme (plot.title = element_text(hjust = 0.5),
+       panel.background = element_rect(fill='transparent'),
+       plot.background = element_rect(fill='transparent', color=NA),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank(),
+       legend.background = element_rect(fill='transparent'),
+       legend.box.background = element_rect(fill='transparent') )
+
+
+#14
+g50_h <- g50[c(19:21),]
+plot50_h<- ggplot(g50_h, aes(x=H,y=Pred.*100)) + ylim(0,100)+ xlim(0,200) +
+  geom_point(size = 1,color = 'goldenrod2') + geom_path(color = 'goldenrod2', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(g50_h$H),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=g50_h, aes(x=H, ymin=100*(Lower_L), ymax=100*(Upper_L)),alpha=0.2,inherit.aes = FALSE)+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+
+#15
+g50_ds <- data.frame()
+plot50_ds <- ggplot(g50_ds) + geom_point()+geom_blank()+theme_bw()
+theme (plot.title = element_text(hjust = 0.5),
+       panel.bdskground = element_rect(fill='transparent'),
+       plot.bdskground = element_rect(fill='transparent', color=NA),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank(),
+       legend.bdskground = element_rect(fill='transparent'),
+       legend.box.bdskground = element_rect(fill='transparent') )
+
+
+#16
+g50_ta <- data.frame()
+plot50_ta <- ggplot(g50_ta) + geom_point()+geom_blank()+theme_bw()
+theme (plot.title = element_text(hjust = 0.5),
+       panel.background = element_rect(fill='transparent'),
+       plot.background = element_rect(fill='transparent', color=NA),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank(),
+       legend.background = element_rect(fill='transparent'),
+       legend.box.background = element_rect(fill='transparent') )
+
+
+#17
+g50_e <- g50[c(22:24),]
+plot50_e<- ggplot(g50_e, aes(x=EX,y=Pred.*100)) + ylim(0,100)+ xlim(2,10) +
+  geom_point(size = 1,color = 'goldenrod2') + geom_path(color = 'goldenrod2', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(g50_e$EX),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=g50_e, aes(x=EX, ymin=100*(Lower_L), ymax=100*(Upper_L)),alpha=0.2,inherit.aes = FALSE)+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+#18
+g50_ac <- g50[c(25:27),]
+plot50_ac<- ggplot(g50_ac, aes(x=AV,y=Pred.*100)) + ylim(0,100)+ xlim(10,30) +
+  geom_point(size = 1,color = 'cyan3') + geom_path(color = 'cyan3', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(g50_ac$AV),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=g50_ac, aes(x=AV, ymin=100*(Lower_L), ymax=100*(Upper_L)),alpha=0.2,inherit.aes = FALSE)+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+
+#___________________________________________________________________________
+
+#19
+
+d75_fa <- d75[c(1:6),]
+d75_fa$FA <- factor(d75_fa$FA, levels = d75_fa$FA)
+plot75_fa <- ggplot(d75_fa, aes(x=FA, y=Prediction*100)) + geom_pointrange(aes(ymin=Lower_limit*100, ymax=Upper_limit*100), color = ifelse(d75_fa$Prediction == 0.5738049, "grey", ifelse(d75_fa$Prediction < 0.8543334, "black", ifelse(d75_fa$Prediction > 0.8543334, "cyan3","goldenrod2")) ))+ ggtitle("Funding Agency") +xlab(" ") + ylab("SG50")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+#20
+d75_ts <- d75[c(7:8),]
+d75_ts$type <- c("TS1", "TS2")
+plot75_ts <- ggplot(d75_ts, aes(x=type, y=Prediction*100)) + geom_pointrange(aes(ymin=Lower_limit*100, ymax=Upper_limit*100), color = ifelse(d75_ts$T == 1, "grey", "cyan3"))+ ggtitle("Time of Submissions") +xlab(" ") + ylab("SG50")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+#21
+d75_twr <- d75[c(11:13),]
+plot75_twr<- ggplot(d75_twr, aes(x=TWR,y=Prediction*100)) + ylim(0,100)+ xlim(0,100) +
+  geom_point(size = 1,color = 'goldenrod2') + geom_path(color = 'goldenrod2', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(d75_twr$TWR),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=d75_twr, aes(x=TWR, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ ggtitle("Typical Week Research")+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+#22
+dd_fa <- dd[c(1:6),]
+dd_fa$FA <- factor(dd_fa$FA, levels = dd_fa$FA)
+plotdd_fa <- ggplot(dd_fa, aes(x=FA, y=Prediction*100)) + geom_pointrange(aes(ymin=Lower_limit*100, ymax=Upper_limit*100), color = ifelse(dd_fa$Prediction == 0.5738049, "grey", ifelse(dd_fa$Prediction == 0.1699917, "grey", ifelse(dd_fa$Prediction < 0.5, "black","red")) )) +xlab(" ") + ylab("SG50")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+#23
+dd_ts <- data.frame()
+plotdd_ts <- ggplot(dd_ts) + geom_point()+geom_blank()+theme_bw()
+theme (plot.title = element_text(hjust = 0.5),
+       panel.background = element_rect(fill='transparent'),
+       plot.background = element_rect(fill='transparent', color=NA),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank(),
+       legend.background = element_rect(fill='transparent'),
+       legend.box.background = element_rect(fill='transparent') )
+
+
+#24
+dd_twr <- dd[c(7:9),]
+plotdd_twr<- ggplot(dd_twr, aes(x=TWR,y=Prediction*100)) + ylim(0,100)+ xlim(0,100) +
+  geom_point(size = 1,color = 'red') + geom_path(color = 'red', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(dd_twr$TWR),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=dd_twr, aes(x=TWR, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+#_________________________________________________________________________________
+
+
+#25
+d75_h <- d75[c(14:16),]
+plotd75_h<- ggplot(d75_h, aes(x=H,y=Prediction*100)) + ylim(0,100)+ xlim(0,100) +
+  geom_point(size = 1,color = 'cyan3') + geom_path(color = 'cyan3', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(d75_h$H),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=d75_h, aes(x=H, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ ggtitle("h-index")+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+#26
+d75_rs <- d75[c(9:10),]
+d75_rs$type <- c("RS1","RS2")
+plotd75_rs <- ggplot(d75_rs, aes(x=type, y=Prediction*100)) + geom_pointrange(aes(ymin=Lower_limit*100, ymax=Upper_limit*100), color = ifelse(d75_rs$Prediction > 0.5, "grey", "cyan3"))+ ggtitle("Research Style") +xlab(" ") + ylab("SG50")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+#27
+d75_op <- d75[c(17:19),]
+plotd75_op<- ggplot(d75_op, aes(x=OP,y=Prediction*100)) + ylim(0,100)+ xlim(2,10) +
+  geom_point(size = 1,color = 'cyan3') + geom_path(color = 'cyan3', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(d75_op$OP),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=d75_op, aes(x=OP, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ ggtitle("Openess")+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+#28
+dd_h <- data.frame()
+plotdd_h <- ggplot(dd_h) + geom_point()+geom_blank()+theme_bw()
+theme (plot.title = element_text(hjust = 0.5),
+       panel.background = element_rect(fill='transparent'),
+       plot.background = element_rect(fill='transparent', color=NA),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank(),
+       legend.background = element_rect(fill='transparent'),
+       legend.box.background = element_rect(fill='transparent') )
+
+#29
+dd_rs <- data.frame()
+plotdd_rs <- ggplot(dd_rs) + geom_point()+geom_blank()+theme_bw()
+theme (plot.title = element_text(hjust = 0.5),
+       panel.background = element_rect(fill='transparent'),
+       plot.background = element_rect(fill='transparent', color=NA),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank(),
+       legend.background = element_rect(fill='transparent'),
+       legend.box.background = element_rect(fill='transparent') )
+
+
+#30
+dd_op <- dd[c(10:12),]
+plotdd_op<- ggplot(dd_op, aes(x=OP,y=Prediction*100)) + ylim(0,100)+ xlim(2,10) +
+  geom_point(size = 1,color = 'cyan3') + geom_path(color = 'cyan3', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(dd_op$OP),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=dd_op, aes(x=OP, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+#_____________________________________________________________________
+
+#31
+g50dd_np <- g50dd[c(1:3),]
+g50dd_np$type <- c("NP1","NP2","NP3")
+plotg50dd_np <- ggplot(g50dd_np, aes(x=type, y=Prediction*100)) + geom_pointrange(aes(ymin=Lower_limit*100, ymax=Upper_limit*100), color = ifelse(g50dd_np$Prediction == 0.102912834, "grey", "goldenrod2"))+ ggtitle("Number of Proposals") +xlab(" ") + ylab("SG50$$")+ ylim(0,100) + theme(
+  plot.title = element_text(hjust = 0.5),
+  panel.background = element_rect(fill='transparent'),
+  plot.background = element_rect(fill='transparent', color=NA),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  legend.background = element_rect(fill='transparent'),
+  legend.box.background = element_rect(fill='transparent')
+)
+
+#32
+g50dd_twr <- g50dd[c(4:6),]
+plotg50dd_twr<- ggplot(g50dd_twr, aes(x=TWR,y=Prediction*100)) + ylim(0,100)+ xlim(0,100) +
+  geom_point(size = 1,color = 'goldenrod2') + geom_path(color = 'goldenrod2', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(g50dd_twr$TWR),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=g50dd_twr, aes(x=TWR, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ ggtitle("Typical Week Research")+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+#33
+g50dd_e <- g50dd[c(7:9),]
+plotg50dd_e<- ggplot(g50dd_e, aes(x=EX,y=Prediction*100)) + ylim(0,100)+ xlim(2,10) +
+  geom_point(size = 1,color = 'cyan3') + geom_path(color = 'cyan3', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(g50dd_e$EX),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=g50dd_e, aes(x=EX, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ ggtitle("Extraversion")+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+
+#34
+g50dd_ag <- g50dd[c(10:12),]
+plotg50dd_ag<- ggplot(g50dd_ag, aes(x=AGR,y=Prediction*100)) + ylim(0,100)+ xlim(4,10) +
+  geom_point(size = 1,color = 'cyan3') + geom_path(color = 'cyan3', alpha = 2, size = 1.5) + geom_vline(xintercept = mean(g50dd_ag$AGR),linetype='dashed', color='grey', size=2)+
+  geom_ribbon(data=g50dd_ag, aes(x=AGR, ymin=100*(Lower_limit), ymax=100*(Upper_limit)),alpha=0.2,inherit.aes = FALSE)+ ggtitle("Agreeableness")+ xlab(" ")+ ylab(" ") + theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_rect(fill='transparent'),
+    plot.background = element_rect(fill='transparent', color=NA),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.background = element_rect(fill='transparent'),
+    legend.box.background = element_rect(fill='transparent')
+  )
+```
+
+```{r}
+plot_grid(plot30_np, plot30_fa, plot30_bf, plot30_pr, plot50_np, plot50_fa, plot50_bf, plot50_pr,ncol=4)
+plot_grid(plot30_h, plot30_ds, plot30_ta, plot30_e,plot30_ac, plot50_h, plot50_ds, plot50_ta, plot50_e,plot50_ac,ncol=5)
+plot_grid(plot75_fa, plot75_ts, plot75_twr,plotdd_fa, plotdd_ts, plotdd_twr,ncol=3)
+plot_grid(plotd75_h, plotd75_rs, plotd75_op,plotdd_h, plotdd_rs, plotdd_op,ncol=3)
+plot_grid(plotg50dd_np, plotg50dd_twr, plotg50dd_e,plotg50dd_ag,ncol=4)
+```
+### ANALYTICAL OBSERVATIONS  
+**-->** Faculty included in the sample has 32.5 female(272) and 67.5% Male(131) while the population in NCSES has 64.8% male and 35.2 female. When performed chi square on these vectors we got p value as 0.2735 which is greater than 0.05. As the p-value is greater than 0.05, we do not reject null hypothesis sample gender distribution is independent of the gender distribution of US academia.   
+**-->** SG30 and SG50 are successful of grantsmanship. SG30 consists of the respondents who estimate their success rate to be more than 30% (Successful) while SG50 consists of people with success rate more than 50% (Highly successful).  
+###SG30  
+**-->** Reference researcher is the one who submits 1-2 proposals to NSF and experience no stress. Grey bars falls under the category of RRG30(reference researcher).  
+**-->** As the number proposals increases, the probability for faculty to belong to the most successful class (SG30) decreases. This is concluded by looking at the graphs of Number of proposals of Sg30. Faculty that publishes 1-2 proposals have around 55% probability to fall under successful class category.  Also, probability falls from somewhere around 55%(NP1) to below 25%(NP3).   
+**-->** From funding agency, Reference researcher has around 50% probability of being in successful group. The p-value for NSF is greater than 0.05, so we can accept null that they have highest probability of being in successful class. Also,  we can say that NIH, DOE and NASA groups are almost equal to successful class group, they are represented by black bars with p-value > 0.05 (accept null and are in high probability of being in successful class). While DOD and OT have high probability to match the reference researcher who falls under successful class and these are represented with gold bars with p-value < 0.01 (as it is less than 0.05, reject null and conclude that they have least chance of being in successful group). As the number of submissions are higher for DOD and OT, so, approval of proposal is less.    
+**-->** H-index represents the academic fame of the faculty. SG30 h-index shows that the faculty belonging to the successful class is increasing and it is increasing by approximately 8%. The p-value for this model is less than 0.05(blue bar) so, we can reject null and conclude the more is the academic fame, the more is the chance of being in successful group.    
+**-->**From deadline stress graph, it clearly says that faculty who experience stress have low probability of making it to the successful class. DS2 represents faculty with more stress and they have less probability of matching with RRG30. SO, they are represented with gold bars, also they have p-value < 0.01. As the DS-2 p-value is less than 0.05, we can reject the null and conclude the more is the stress, the less is the probability of being in successful class.     
+**-->** Based on the trait anxiety scores recorded, SG30 faculty chances of matching with reference researcher is decreasing and is also shown in the graph. The probability is dropped from somewhere around 60% to 50%.p- value for this model is less than 0.05 so we can reject null and conclude that the more is the trait anxiety score, the less the probability of being in successful group.    
+###SG50  
+**-->** Reference researcher for RRg50 is the one who submits 1-2 proposals every year and submits to NSF, also takes 1-2 hours of break everyday, conducts pilot research less than 1 month. Adding to this, reference research is also inclined towards extroversion with score 6/10 and 18.8/33 as avoidance coping score.  
+**-->** From the graph of Number of proposals of SG50 faculty, it shows that faculty has probability of slightly more than 50% to belong to successful class.  
+**-->** Same as in SG30, faculty here in SG50 have low probability to be in successful class as their number of proposals increases.The probability decreases from around 50%(NP1) to around 3%(NP3). p-value for NP3 is less than 0.001 which is obviously less than 0.05, we can reject null and conclude that the number of proposals is more, the chance of being in successful group is less.    
+**-->** By the graph of funding agency of SG50, The probability of reference researcher being in successful class in almost 50% and p value is grater than 0.05, we can accept null and conclude that the less number of proposals gives the more chance of approval by the agency. we can conclude that NIH, DOE and NASA are almost equal with faculty of successful class. While, DOD and OT gave probability of around 25% and 30% respectively. Application are more to OT, so approval from the agency is less. We are concluding this by OT's p value which is less than 0.01 by rejecting null.    
+**-->** From the graph of break frequency, we can conclude that faculty taking breaks 3-4 hours everyday(BF-1) have low probability around 50% with p-value > 0.05 than BF-2 with probability around 75% with p-value less than 0.05.  
+**-->** In SG50, faculty with less pilot research (PR1) has high change of being in successful group while faculty with more pilot research(PR5) gave less chance if being in successful group. High pilot research faculty has only 25% of probability to be in successful group. PR1 has p-value greater than 0.05, we can accept null and conclude that the less pilot research is the more chance of being in successful group.   
+**-->** The probability of being in successful class based on h-index (academic face) in increased by 10% for SG50 faculty. The more academic fame (h-index), the higher is probability of being successful. The p-value here is less than 0.01, which is less than 0.05, we can reject null and conclude that the more the fame, the more the chance of being in successful group.      
+**-->** In SG50 faculty, faculty with increasing extroversion score having lower probability to be in successful class. p value is less than 0.01, reject null.    
+**-->** The more the avoidance coping factor, the more probability of being in successful group. This is purely in contradiction to the extroversion. p-value is less than 0.05, reject null.    
+
+**-->**Faculty who estimated their grant funding more than 75% of the total cost as considered to be in S$75 group. These are well funded research operations.  
+**-->** Faculty who estimated full funding are for their research are considered and categorized in Sdd(dollar dollar) group. These are full funded research operations.  
+###S$75
+**-->** Reference researcher submits proposals to NSF, submits only on deadlines and invests 42.5% of time to research and has 29.6 has h-index. researcher doesn't do hands-on and they have openness score 7.5/10.  
+**-->** NIH, NASA and OT groups are in almost in match with the faculty of successful groups. Their p-value is > 0.05 with black bars. While DOD and DOE have probabilities of around 28% each to be in successful group. Reference researcher has more than 50% probability and have p value greater than 0.05.so, accept null.      
+**-->** Faculty who submit their proposals on the deadline have higher probability of being in successful group than the faculty who submits early than the deadline. So, the more time they spend before the submission have higher probability of being in successful group. TS1 has p-value greater than 0.05, accept null and conclude that the more time they spend on research gives them more probability of being in successful group.    
+**-->** TWR graph is increasing. This suggests that the more time they spent on research gives them more chance of being in successful group. p-value is less than 0.01, which is less than 0.05, so reject null.    
+**-->** Same like Sg30 and Sg50, the increase in h-index score(academic fame) the more is the probability of being in successful group. The increase in the h-index of 0-around 55, the probability increased from 50-60%.p- value is less than 0.05, so, reject null and conclude that academic fame brings them more chance of being in successful group.   
+**-->**) This is quite shocking, faculty with no hands-on research style has higher probability of being in successful group.  
+**-->** The more openness to varieties in research leads to lower probability of being in successful group.  The increase the score in openness, the lower is the chance of being successful.  
+###S$$  
+
+**-->**  Reference researcher here submits proposals to NSF and devotes 42.1% of their time to research. And has openness core of 7.5/10.  
+**-->** according to Funding agency graph, The probability of reference research to be in successful graph is only 17%. NIH, DOE, NASA and OT groups are in accordance with reference researcher while DOD has lowest chance of being in successful group with p-value less than 0.001 with red bars.  
+**-->** The more the amount of time they spend on research gives more probability of being in successful group.  
+**-->** The more they are open, the less is the chance of being in successful group. As the openness score increase from 6-10, the probability decreases from 25 to 17%.  
+###SG50$$  
+
+**-->** The faculty who predicts their grantsmanship above 50% are considered to be in SG50dd group. They are considered as Reference highly successful in grantsmanship and well-funded researcher.  
+**-->** Reference researcher here submits 1-2 proposals per year and devotes 42.1% of their time to research. And has extroversion score and agreeableness score of 6 and 7.5 respectively.  
+**-->** Reference researcher belonging to successful group is around 10%. Same as other faculty, as the number of proposals increases, the probability of being in successful group decreases.  
+**-->** As the time they spend on research increases, the probability of making into successful group increases.  
+**-->** From the extraversion graph, As the faculty score of extraversion score increases, the probability of being in successful group decreases. Probability dropped from 15% TO 5% when the score increases from 4-8.  
+**-->** The probability of being in successful group increases by 6% approximately when agreeableness score increases form 6-10.  

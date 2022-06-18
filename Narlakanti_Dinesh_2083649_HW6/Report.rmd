@@ -1,0 +1,148 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Statistical Methods – COSC	6323 - HomeWork-6  
+### By Dinesh Narlakanti (2083649)  
+  
+________________________________________________________________________________  
+  
+### INTRODUCTION  
+  
+More than 2,50,000 participants from Texas A&M University, University of Houston and University of California, Irvine. The data in this document has information about the participants who recorded their perinasal perspiration values, heart beat rate(Chest and Wrist) and breathe rate while performing different tasks i.e; Resting Baseline(RB), Single task(ST), Priming(PM), Relaxing Video(RV), Dual Task(DT) and Presentation Session(PR).  
+  
+This report purely concentrates on:    
+i) Improving the agreement between two heart rate channels(chest and wrist).       
+ii) Computing p value, correlation coefficient r and determination coefficient r^2. of bivariate relationship between the heart rate channels.    
+iii) Strategy to clean the data(remove outliers) and rerunning the regression.  
+
+### GETTING STARTED WITH THE HOMEWORK  
+  
+**Step-1** Installing required packages and importing data. Also, removing the NAs from chest and wrist heart rate channels and aggregating by participant id and treatment.
+```{r include=FALSE}
+
+library(car)
+library(tidyr)
+library(dplyr)
+```
+```{r}
+psy_data <- read.csv("C:/Users/ndine/Downloads/Physiological Data - QC1.csv")
+psy_data <- psy_data[!is.na(psy_data$Chest_HR_QC),]
+psy_data <- psy_data[!is.na(psy_data$Wrist_HR_QC),]
+
+chest <- aggregate(psy_data$Chest_HR_QC, by = 
+                     list(psy_data$Participant_ID, psy_data$Treatment), 
+                   FUN = mean)
+wrist <- aggregate(psy_data$Wrist_HR_QC, by = 
+                     list(psy_data$Participant_ID, psy_data$Treatment),
+                   FUN = mean)
+aggregated <- inner_join(chest, wrist, by = c('Group.1', 'Group.2'))
+colnames(aggregated) <- c('Participant_ID', 'Treatment', 'Chest HR', 'Wrist HR')
+
+```
+**Step-2:** Running linear regression model and printing summary that contains p value, intercept coefficients and determination coefficient of it.  
+```{r}
+relation <- lm(aggregated$`Wrist HR` ~ aggregated$`Chest HR`)
+
+summary1 <- summary(relation)
+summary1
+```
+**Step-3:** Running cor.test to find the correlation coefficient.
+```{r}
+cor1 <-cor.test(aggregated$`Chest HR`, aggregated$`Wrist HR`)
+cor1
+```
+**Step-4:** Finding the absolute value of the difference of two heart rate channels. 
+```{r}
+aggregated$difference <- abs(aggregated$`Chest HR` - aggregated$`Wrist HR`)
+```
+**Step-5:** Applying strategy to remove the outliers
+```{r}
+Q <- quantile(aggregated$difference, probs=c(.25, .75), na.rm = FALSE)
+
+iqr <- IQR(aggregated$difference)
+
+eliminated <- subset(aggregated, aggregated$difference > (Q[1] - 1.5*iqr) &
+                       aggregated$difference < (Q[2]+1.5*iqr))
+
+```
+**Step-6:** Rerunning the regression and core.test
+```{r}
+relation2 <- lm(eliminated$`Wrist HR` ~ eliminated$`Chest HR`)
+summary2 <- summary(relation2)
+summary2
+
+cor2<- cor.test(eliminated$`Wrist HR`, eliminated$`Chest HR`)
+cor2
+```
+**Step-7:** Plotting the graphs before and after removing outliers
+```{r}
+par(mfrow=c(1,2))
+
+plot(aggregated$`Wrist HR`,aggregated$`Chest HR`,main = "Before removing outliers",
+     abline(lm(aggregated$`Chest HR` ~ aggregated$`Wrist HR`)), cex = 1.3,
+     pch = 16,
+     xlab = "Chest",
+     ylab = "Wrist")
+
+plot(eliminated$`Wrist HR`,eliminated$`Chest HR`,main = "After removing outliers",
+     abline(lm(eliminated$`Chest HR` ~ eliminated$`Wrist HR`)), cex = 1.3,
+     pch = 16,
+     xlab = "Chest",
+     ylab = "Wrist")
+
+
+```
+**Step-8:** Plotting the pdf of the difference before and after removing outliers
+```{r}
+par(mfrow=c(1,2))
+
+PDF <- density(aggregated$difference)
+plot(PDF, main = "Data with outliers")
+
+PDF2 <- density(eliminated$difference)
+plot(PDF2, main = "Data without outliers" )
+
+```
+### ANALYSIS OF THE RESULTS  
+**1)** **Before removing Outliers**   
+P-VALUE: 
+```{r}
+summary1$coefficients[8]
+```
+R-Value: 
+```{r}
+cor1$estimate
+```
+R^2 Value:
+```{r}
+summary1$r.squared
+```
+**2)** **After removing Outliers**  
+P-VALUE: 
+```{r}
+summary2$coefficients[8]
+```
+R-Value: 
+```{r}
+cor2$estimate
+```
+R^2 Value:
+```{r}
+summary2$r.squared
+```
+**3)** Outliers mean that they are in slight disturbance from the remaining data. We can observe the outliers from the graph that has title 'Data with outliers'  
+**4)** Identified and removed outliers by using IQR strategy.  
+**5)** Yes, things got improved after removing the outliers. The notable improvements found are:  
+**i.** Correlation coefficient increased from 0.514 to 0.8114  
+**ii.** Determination coefficient increased from 0.2643 to 0.6585  
+**iii.** P-valued decreased from 1.139e-13 to < 2.2e-16  
+**6)** As p-value is less than 0.05, we can reject the null hypothesis and conclude that both variables are significant to each other.  
+**7)**  We can conclude that model is statistically significant by looking at the coefficients and p values. As p value decreases the model becomes significant.  
+**8)** Higher the t-value, the more significant is the model. Here, t-value increased from 8.042 to 17.836 after outliers are removed.  
+**9)** Standard Error and F-statistic can also be used to measure the good fitness of model.
+
+
+
+

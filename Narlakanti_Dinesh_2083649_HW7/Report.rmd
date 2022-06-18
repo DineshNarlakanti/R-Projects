@@ -1,0 +1,1098 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Statistical Methods – COSC	6323 - HomeWork-7  
+### By Dinesh Narlakanti (2083649)  
+  
+________________________________________________________________________________  
+  
+### INTRODUCTION  
+
+11 Subjects(Participants) drove around 19 km in Texas Town measuring their stress and driving variable data. The variables used here are speed, accelerator, brake and steering angle. And to measure the stress, perinasal perspiration value is taken and considered.  
+  
+This report purely concentrates on:  
+i) Possibility of multi-collinearity  
+ii) Extracting meaningful data through forward, backward and mixed selection approach.  
+iii) Visualizations to support the analysis.  
+  
+### GETTING STARTED WITH THE HOMEWORK  
+
+I first wrote the steps for 1 subject and repeated the same for other 11 subjects as well.    
+**Step-1** Installing required packages and libraries. 
+```{r include = FALSE}
+library(olsrr)
+library(GGally)
+library(tidyverse)
+```
+**Step-2** Reading the csv files and dropping the NA values. Also, assigned a subject ID to each subject to treat (1|SubjectID as random effect).
+```{r}
+s1 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S01.csv")
+s1_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S01-Baseline.csv")
+s1 <- s1 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s1$SubjectID <- 1
+```
+```{r include= FALSE}
+s2 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S02.csv")
+s3 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S03.csv")
+s4 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S04.csv")
+s5 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S05.csv")
+s6 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S06.csv")
+s7 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S07.csv")
+s8 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S08.csv")
+s10 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S10.csv")
+s11 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S11.csv")
+s12 <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S12.csv")
+
+s2_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S02-Baseline.csv")
+s3_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S03-Baseline.csv")
+s4_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S04-Baseline.csv")
+s5_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S05-Baseline.csv")
+s6_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S06-Baseline.csv")
+s7_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S07-Baseline.csv")
+s8_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S08-Baseline.csv")
+s10_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S10-Baseline.csv")
+s11_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S11-Baseline.csv")
+s12_b <- read.csv("C:/Users/ndine/OneDrive/Desktop/Data-HW7/S12-Baseline.csv")
+
+s2 <- s2 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s3 <- s3 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s4 <- s4 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s5 <- s5 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s6 <- s6 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s7 <- s7 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s8 <- s8 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s10 <- s10 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s11 <- s11 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s12 <- s12 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+
+s2 <- s2 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s3 <- s3 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s4 <- s4 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s5 <- s5 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s6 <- s6 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s7 <- s7 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s8 <- s8 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s10 <- s10 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s11 <- s11 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+s12 <- s12 %>% drop_na(pp_nr5, Accelerator, Brake, Steering, Speed)
+
+s1$log_delta_pp <- 0
+s2$log_delta_pp <- 0
+s3$log_delta_pp <- 0
+s4$log_delta_pp <- 0
+s5$log_delta_pp <- 0
+s6$log_delta_pp <- 0
+s7$log_delta_pp <- 0
+s8$log_delta_pp <- 0
+s10$log_delta_pp <- 0
+s11$log_delta_pp <- 0
+s12$log_delta_pp <- 0
+```
+**Step-3** Manipulating data to find PPNATDi. Calculated mean of pp_nr2 value and subtracted it from pp_nr5. For checking whether normalized pp values are better, calculated mean of log pp_nr2 values and subtracted it from pp_nr5
+```{r}
+mean_pp2 <- mean(s1_b$pp_nr2)
+s1$new_pp <- s1$pp_nr5 - mean_pp2
+
+log_mean_pp2 <-mean(log(s1_b$pp_nr2)) 
+s1$log_new_pp <- log(s1$pp_nr5) - log_mean_pp2
+```
+
+```{r include = FALSE}
+mean_pp2 <- mean(s2_b$pp_nr2)
+s2$new_pp <- s2$pp_nr5 - mean_pp2
+
+mean_pp2 <- mean(s3_b$pp_nr2)
+s3$new_pp <- s3$pp_nr5 - mean_pp2
+
+mean_pp2 <- mean(s4_b$pp_nr2)
+s4$new_pp <- s4$pp_nr5 - mean_pp2
+
+mean_pp2 <- mean(s5_b$pp_nr2)
+s5$new_pp <- s5$pp_nr5 - mean_pp2
+
+mean_pp2 <- mean(s6_b$pp_nr2)
+s6$new_pp <- s6$pp_nr5 - mean_pp2
+
+mean_pp2 <- mean(s7_b$pp_nr2)
+s7$new_pp <- s7$pp_nr5 - mean_pp2
+
+mean_pp2 <- mean(s8_b$pp_nr2)
+s8$new_pp <- s8$pp_nr5 - mean_pp2
+
+mean_pp2 <- mean(s10_b$pp_nr2)
+s10$new_pp <- s10$pp_nr5 - mean_pp2
+
+mean_pp2 <- mean(s11_b$pp_nr2)
+s11$new_pp <- s11$pp_nr5 - mean_pp2
+
+mean_pp2 <- mean(s12_b$pp_nr2)
+s12$new_pp <- s12$pp_nr5 - mean_pp2
+
+log_mean_pp2 <-mean(log(s2_b$pp_nr2)) 
+s2$log_new_pp <- log(s2$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s3_b$pp_nr2)) 
+s3$log_new_pp <- log(s3$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s4_b$pp_nr2)) 
+s4$log_new_pp <- log(s4$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s5_b$pp_nr2)) 
+s5$log_new_pp <- log(s5$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s6_b$pp_nr2)) 
+s6$log_new_pp <- log(s6$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s1_b$pp_nr2)) 
+s1$log_new_pp <- log(s1$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s7_b$pp_nr2)) 
+s7$log_new_pp <- log(s7$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s1_b$pp_nr2)) 
+s1$log_new_pp <- log(s1$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s8_b$pp_nr2)) 
+s8$log_new_pp <- log(s8$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s10_b$pp_nr2)) 
+s10$log_new_pp <- log(s10$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s11_b$pp_nr2)) 
+s11$log_new_pp <- log(s11$pp_nr5) - log_mean_pp2
+
+log_mean_pp2 <-mean(log(s12_b$pp_nr2)) 
+s12$log_new_pp <- log(s12$pp_nr5) - log_mean_pp2
+
+```
+**Step-4** Finding mean and sd for all the variables (accelerator, speed, brake and steering). As question mentioned, we need to compute 30 seconds into the past [t-30,t] for predictors and 5 seconds into the future (t,t+5] for response variable. And also calculated mean and sd for the terms.
+```{r}
+#mean and sd for speed
+s1$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s1)) {
+  s1$mean_speed[x] <- mean(s1$Speed[a:x])
+  a <- a +1
+}
+s1$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s1)) {
+  s1$sd_speed[x] <- sd(s1$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s1$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s1)) {
+  s1$mean_acc[x] <- mean(s1$Accelerator[a:x])
+  a <- a +1
+}
+s1$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s1)) {
+  s1$sd_acc[x] <- sd(s1$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s1$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s1)) {
+  s1$mean_brake[x] <- mean(s1$Brake[a:x])
+  a <- a +1
+}
+s1$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s1)) {
+  s1$sd_brake[x] <- sd(s1$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s1$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s1)) {
+  s1$mean_steering[x] <- mean(s1$Steering[a:x])
+  a <- a +1
+}
+s1$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s1)) {
+  s1$sd_steering[x] <- sd(s1$Steering[a:x])
+  a <- a +1
+}
+
+s1$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s1)-5)
+for (x in 1:c) {
+  
+  s1$delta_pp[x] <- mean(s1$new_pp[a:b])
+  s1$log_delta_pp[x] <- mean(s1$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+```
+
+```{r include = FALSE}
+#mean and sd for speed
+s2$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s2)) {
+  s2$mean_speed[x] <- mean(s2$Speed[a:x])
+  a <- a +1
+}
+s2$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s2)) {
+  s2$sd_speed[x] <- sd(s2$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s2$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s2)) {
+  s2$mean_acc[x] <- mean(s2$Accelerator[a:x])
+  a <- a +1
+}
+s2$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s2)) {
+  s2$sd_acc[x] <- sd(s2$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s2$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s2)) {
+  s2$mean_brake[x] <- mean(s2$Brake[a:x])
+  a <- a +1
+}
+s2$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s2)) {
+  s2$sd_brake[x] <- sd(s2$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s2$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s2)) {
+  s2$mean_steering[x] <- mean(s2$Steering[a:x])
+  a <- a +1
+}
+s2$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s2)) {
+  s2$sd_steering[x] <- sd(s2$Steering[a:x])
+  a <- a +1
+}
+
+
+s2$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s2)-5)
+for (x in 1:c) {
+  
+  s2$delta_pp[x] <- mean(s2$new_pp[a:b])
+  
+  s2$log_delta_pp[x] <- mean(s2$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+#________________________
+
+#mean and sd for speed
+s3$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s3)) {
+  s3$mean_speed[x] <- mean(s3$Speed[a:x])
+  a <- a +1
+}
+s3$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s3)) {
+  s3$sd_speed[x] <- sd(s3$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s3$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s3)) {
+  s3$mean_acc[x] <- mean(s3$Accelerator[a:x])
+  a <- a +1
+}
+s3$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s3)) {
+  s3$sd_acc[x] <- sd(s3$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s3$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s3)) {
+  s3$mean_brake[x] <- mean(s3$Brake[a:x])
+  a <- a +1
+}
+s3$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s3)) {
+  s3$sd_brake[x] <- sd(s3$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s3$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s3)) {
+  s3$mean_steering[x] <- mean(s3$Steering[a:x])
+  a <- a +1
+}
+s3$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s3)) {
+  s3$sd_steering[x] <- sd(s3$Steering[a:x])
+  a <- a +1
+}
+
+
+s3$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s3)-5)
+for (x in 1:c) {
+  
+  s3$delta_pp[x] <- mean(s3$new_pp[a:b])
+  s3$log_delta_pp[x] <- mean(s3$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+
+#_______________________________________________________
+
+#mean and sd for speed
+s4$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s4)) {
+  s4$mean_speed[x] <- mean(s4$Speed[a:x])
+  a <- a +1
+}
+s4$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s4)) {
+  s4$sd_speed[x] <- sd(s4$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s4$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s4)) {
+  s4$mean_acc[x] <- mean(s4$Accelerator[a:x])
+  a <- a +1
+}
+s4$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s4)) {
+  s4$sd_acc[x] <- sd(s4$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s4$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s4)) {
+  s4$mean_brake[x] <- mean(s4$Brake[a:x])
+  a <- a +1
+}
+s4$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s4)) {
+  s4$sd_brake[x] <- sd(s4$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s4$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s4)) {
+  s4$mean_steering[x] <- mean(s4$Steering[a:x])
+  a <- a +1
+}
+s4$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s4)) {
+  s4$sd_steering[x] <- sd(s4$Steering[a:x])
+  a <- a +1
+}
+
+
+s4$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s4)-5)
+for (x in 1:c) {
+  
+  s4$delta_pp[x] <- mean(s4$new_pp[a:b])
+  s4$log_delta_pp[x] <- mean(s4$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+
+#-------------------------------------------------------
+
+#mean and sd for speed
+s5$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s5)) {
+  s5$mean_speed[x] <- mean(s5$Speed[a:x])
+  a <- a +1
+}
+s5$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s5)) {
+  s5$sd_speed[x] <- sd(s5$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s5$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s5)) {
+  s5$mean_acc[x] <- mean(s5$Accelerator[a:x])
+  a <- a +1
+}
+s5$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s5)) {
+  s5$sd_acc[x] <- sd(s5$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s5$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s5)) {
+  s5$mean_brake[x] <- mean(s5$Brake[a:x])
+  a <- a +1
+}
+s5$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s5)) {
+  s5$sd_brake[x] <- sd(s5$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s5$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s5)) {
+  s5$mean_steering[x] <- mean(s5$Steering[a:x])
+  a <- a +1
+}
+s5$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s5)) {
+  s5$sd_steering[x] <- sd(s5$Steering[a:x])
+  a <- a +1
+}
+
+
+s5$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s5)-5)
+for (x in 1:c) {
+  
+  s5$delta_pp[x] <- mean(s5$new_pp[a:b])
+  s5$log_delta_pp[x] <- mean(s5$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+
+#-----------------------------------------
+
+#mean and sd for speed
+s6$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s6)) {
+  s6$mean_speed[x] <- mean(s6$Speed[a:x])
+  a <- a +1
+}
+s6$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s6)) {
+  s6$sd_speed[x] <- sd(s6$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s6$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s6)) {
+  s6$mean_acc[x] <- mean(s6$Accelerator[a:x])
+  a <- a +1
+}
+s6$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s6)) {
+  s6$sd_acc[x] <- sd(s6$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s6$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s6)) {
+  s6$mean_brake[x] <- mean(s6$Brake[a:x])
+  a <- a +1
+}
+s6$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s6)) {
+  s6$sd_brake[x] <- sd(s6$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s6$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s6)) {
+  s6$mean_steering[x] <- mean(s6$Steering[a:x])
+  a <- a +1
+}
+s6$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s6)) {
+  s6$sd_steering[x] <- sd(s6$Steering[a:x])
+  a <- a +1
+}
+
+
+s6$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s6)-5)
+for (x in 1:c) {
+  
+  s6$delta_pp[x] <- mean(s6$new_pp[a:b])
+  s6$log_delta_pp[x] <- mean(s6$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+
+#--------------------------------------------------
+
+#mean and sd for speed
+s7$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s7)) {
+  s7$mean_speed[x] <- mean(s7$Speed[a:x])
+  a <- a +1
+}
+s7$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s7)) {
+  s7$sd_speed[x] <- sd(s7$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s7$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s7)) {
+  s7$mean_acc[x] <- mean(s7$Accelerator[a:x])
+  a <- a +1
+}
+s7$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s7)) {
+  s7$sd_acc[x] <- sd(s7$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s7$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s7)) {
+  s7$mean_brake[x] <- mean(s7$Brake[a:x])
+  a <- a +1
+}
+s7$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s7)) {
+  s7$sd_brake[x] <- sd(s7$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s7$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s7)) {
+  s7$mean_steering[x] <- mean(s7$Steering[a:x])
+  a <- a +1
+}
+s7$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s7)) {
+  s7$sd_steering[x] <- sd(s7$Steering[a:x])
+  a <- a +1
+}
+
+
+s7$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s7)-5)
+for (x in 1:c) {
+  
+  s7$delta_pp[x] <- mean(s7$new_pp[a:b])
+  s7$log_delta_pp[x] <- mean(s7$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+
+
+#----------------------------------------------
+
+#mean and sd for speed
+s8$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s8)) {
+  s8$mean_speed[x] <- mean(s8$Speed[a:x])
+  a <- a +1
+}
+s8$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s8)) {
+  s8$sd_speed[x] <- sd(s8$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s8$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s8)) {
+  s8$mean_acc[x] <- mean(s8$Accelerator[a:x])
+  a <- a +1
+}
+s8$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s8)) {
+  s8$sd_acc[x] <- sd(s8$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s8$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s8)) {
+  s8$mean_brake[x] <- mean(s8$Brake[a:x])
+  a <- a +1
+}
+s8$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s8)) {
+  s8$sd_brake[x] <- sd(s8$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s8$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s8)) {
+  s8$mean_steering[x] <- mean(s8$Steering[a:x])
+  a <- a +1
+}
+s8$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s8)) {
+  s8$sd_steering[x] <- sd(s8$Steering[a:x])
+  a <- a +1
+}
+
+
+s8$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s8)-5)
+for (x in 1:c) {
+  
+  s8$delta_pp[x] <- mean(s8$new_pp[a:b])
+  s8$log_delta_pp[x] <- mean(s8$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+
+#----------------------------------
+
+#mean and sd for speed
+s10$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s10)) {
+  s10$mean_speed[x] <- mean(s10$Speed[a:x])
+  a <- a +1
+}
+s10$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s10)) {
+  s10$sd_speed[x] <- sd(s10$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s10$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s10)) {
+  s10$mean_acc[x] <- mean(s10$Accelerator[a:x])
+  a <- a +1
+}
+s10$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s10)) {
+  s10$sd_acc[x] <- sd(s10$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s10$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s10)) {
+  s10$mean_brake[x] <- mean(s10$Brake[a:x])
+  a <- a +1
+}
+s10$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s10)) {
+  s10$sd_brake[x] <- sd(s10$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s10$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s10)) {
+  s10$mean_steering[x] <- mean(s10$Steering[a:x])
+  a <- a +1
+}
+s10$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s10)) {
+  s10$sd_steering[x] <- sd(s10$Steering[a:x])
+  a <- a +1
+}
+
+
+s10$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s10)-5)
+for (x in 1:c) {
+  
+  s10$delta_pp[x] <- mean(s10$new_pp[a:b])
+  s10$log_delta_pp[x] <- mean(s10$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+
+
+#-----------------------------
+
+#mean and sd for speed
+s11$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s11)) {
+  s11$mean_speed[x] <- mean(s11$Speed[a:x])
+  a <- a +1
+}
+s11$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s11)) {
+  s11$sd_speed[x] <- sd(s11$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s11$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s11)) {
+  s11$mean_acc[x] <- mean(s11$Accelerator[a:x])
+  a <- a +1
+}
+s11$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s11)) {
+  s11$sd_acc[x] <- sd(s11$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s11$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s11)) {
+  s11$mean_brake[x] <- mean(s11$Brake[a:x])
+  a <- a +1
+}
+s11$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s11)) {
+  s11$sd_brake[x] <- sd(s11$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s11$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s11)) {
+  s11$mean_steering[x] <- mean(s11$Steering[a:x])
+  a <- a +1
+}
+s11$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s11)) {
+  s11$sd_steering[x] <- sd(s11$Steering[a:x])
+  a <- a +1
+}
+
+
+s11$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s11)-5)
+for (x in 1:c) {
+  
+  s11$delta_pp[x] <- mean(s11$new_pp[a:b])
+  s11$log_delta_pp[x] <- mean(s11$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+
+#-----------------------------------------
+
+#mean and sd for speed
+s12$mean_speed <- 0
+a <- 1
+for(x in 30:nrow(s12)) {
+  s12$mean_speed[x] <- mean(s12$Speed[a:x])
+  a <- a +1
+}
+s12$sd_speed <- 0
+a <- 1
+for(x in 30:nrow(s12)) {
+  s12$sd_speed[x] <- sd(s12$Speed[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for accelerator
+s12$mean_acc <- 0
+a <- 1
+for(x in 30:nrow(s12)) {
+  s12$mean_acc[x] <- mean(s12$Accelerator[a:x])
+  a <- a +1
+}
+s12$sd_acc <- 0
+a <- 1
+for(x in 30:nrow(s12)) {
+  s12$sd_acc[x] <- sd(s12$Accelerator[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for brake
+s12$mean_brake <- 0
+a <- 1
+for(x in 30:nrow(s12)) {
+  s12$mean_brake[x] <- mean(s12$Brake[a:x])
+  a <- a +1
+}
+s12$sd_brake <- 0
+a <- 1
+for(x in 30:nrow(s12)) {
+  s12$sd_brake[x] <- sd(s12$Brake[a:x])
+  a <- a +1
+}
+
+
+#mean and sd for steering
+s12$mean_steering <- 0
+a <- 1
+for(x in 30:nrow(s12)) {
+  s12$mean_steering[x] <- mean(s12$Steering[a:x])
+  a <- a +1
+}
+s12$sd_steering <- 0
+a <- 1
+for(x in 30:nrow(s12)) {
+  s12$sd_steering[x] <- sd(s12$Steering[a:x])
+  a <- a +1
+}
+
+
+s12$delta_pp <- 0
+a <- 2
+b <- 6
+c <- (nrow(s12)-5)
+for (x in 1:c) {
+  
+  s12$delta_pp[x] <- mean(s12$new_pp[a:b])
+  s12$log_delta_pp[x] <- mean(s12$log_new_pp[a:b])
+  a <- a+1
+  b <- b+1
+}
+
+```
+**Step-5** Removing first 29 and last 5 values as they are 0. These just create noise in the model. So, decided to remove them.
+```{r}
+s1 <- s1[-c(1:29),]
+s1 <- head(s1, -5)
+```
+
+```{r include = FALSE}
+s2 <- s2[-c(1:29),]
+s2 <- head(s2, -5)
+
+s3 <- s3[-c(1:29),]
+s3 <- head(s3, -5)
+
+s4 <- s4[-c(1:29),]
+s4 <- head(s4, -5)
+
+s5 <- s5[-c(1:29),]
+s5 <- head(s5, -5)
+
+s6 <- s6[-c(1:29),]
+s6 <- head(s6, -5)
+
+s7 <- s7[-c(1:29),]
+s7 <- head(s7, -5)
+
+s8 <- s8[-c(1:29),]
+s8 <- head(s8, -5)
+
+s10 <- s10[-c(1:29),]
+s10 <- head(s10, -5)
+
+s11 <- s11[-c(1:29),]
+s11 <- head(s11, -5)
+
+s12 <- s12[-c(1:29),]
+s12 <- head(s12, -5)
+```
+**Step-6** Merging all the data-sets into 1 using bind_rows. We can differentiate the dataframes with the subjectID column. 
+```{r}
+final <- bind_rows(s1,s2,s3,s4,s5,s6,s7,s8,s10,s11,s12)
+```
+**Step-7** Finding normality to finalize the response variable.
+```{r}
+par(mfrow=c(1,2))
+qqnorm(final$delta_pp, main = "Without log transformation")
+qqnorm(final$log_delta_pp, main = "With log transformation")
+```
+**Step-8** Finding the summary of multi regression model.  
+```{r}
+model <- lm(log_delta_pp ~ mean_speed + sd_speed + mean_acc + sd_acc +
+              mean_brake + sd_brake + mean_steering + sd_steering + (1|SubjectID) , data = final)
+summary(model)
+```
+
+**Step-9** Plotting matrix scatter plot.
+```{r}
+input <- final[,c("log_delta_pp","mean_speed","sd_speed","mean_acc", "sd_acc", 
+                  "mean_brake", "sd_brake", "mean_steering", "sd_steering")]
+plot(input, pch=16, col="blue",
+     main="Matrix Scatterplot")
+```
+**Step-10** Checking multi collinearity using VIF value 
+
+```{r}
+vif<- ols_vif_tol(model)
+max(vif$VIF)
+```
+**Step-11** Step-wise Forward Regression
+```{r}
+ols_step_forward_aic(model, details = TRUE)
+```
+**Step-12** Step-wise Backward Regression
+```{r}
+ols_step_backward_aic(model, details = TRUE)
+```
+**Step-13** Mixed selection or Step-wise Regression
+```{r}
+ols_step_both_aic(model, details = TRUE)
+```
+**Step-14** Eliminating the highest vif value (mean_brake) and performing multi linear regression. Later, calculating the vif values. 
+```{r}
+model2 <- lm(log_delta_pp ~ mean_speed + sd_speed + mean_acc + sd_acc + 
+               sd_brake + mean_steering + sd_steering + (1|SubjectID) , 
+             data = final)
+ols_vif_tol(model2)
+```
+**Step-15** Step-wise Forward Regression on model2
+```{r}
+ols_step_forward_aic(model2, details = TRUE)
+```
+**Step-16** Step-wise Backward Regression on model2
+```{r}
+ols_step_backward_aic(model2, details = TRUE)
+```
+**Step-17** Mixed selection or Step-wise Regression on model2
+```{r}
+ols_step_both_aic(model2, details = TRUE)
+```
+
+### Observations and Inferences
+**1)** As we can see from the qq plots, log transformed values are normalized than the original values. So, we are considering log_delta_pp as the responsive variable.  
+**2)** When we checked the vif values of the model with all the features, we can clearly see that mean_brake has highest vif value (3.769341). So, removing the mean_brake will eliminate the multi collinearity from the model. The highest vif value is the culprit for multi collinearity.  
+**3)** All the three selection methods have the same AIC value at the last step (-33.5966)  
+**4)** In the forward selection model, model starts with null model and it has AIC 562.0742. At the end of 6 steps, the model has AIC -33.5966.  
+**5)** In the backward selection model, model started with full model and it has AIC -29.80972. At the end of 2 stpes, the model has AIC -33.5966.  
+**6)** In the mixed selection model, the model started with AIC 562.0742 and at the end of 6 steps, model has AIC -33.5966.  
+**7)** mean_brake is collinear with sd_brake.  
+**8)** AIC value before removing mean_brake and after removing mean_brake is didnt change, AIC(-33.5966) remained unchanged. 
+**9)** In FS model, sd_acc (sd of acceleerator) has the highest R^2 value, so we can consider it as the significant variable.  
+**10)** Also, the least RSS in FS model is sd_acc. This strongly suggests that sd_acc is the significant model.  
+**11)** In backward selection model, the lowest RSS increase is from 433.817 (1|s) to 433.829 (mean_steering).  
+**12)** In backward selection model, the lowest R^2 is between 1|S and mean_steering.  
+**13)** Variables removed in backward model are 1|S and mean_steering, so, we can conclude that those two are least significant variables.   

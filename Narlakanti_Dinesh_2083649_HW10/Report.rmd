@@ -1,0 +1,142 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Statistical Methods – COSC	6323 - Home-Work-10 
+### By Dinesh Narlakanti (2083649)
+  
+________________________________________________________________________________  
+ 
+### INTRODUCTION  
+63 participants were randomly assigned to four groups for a writing an essay task. Mainly divided into two groups(Email mode: Batch and Continual) and each group is further divided into two other groups(Anticipatory stress: High and Low). High stressor was implemented by informing the participant about an upcoming presentation after the writing task.  
+
+This report mainly concentrated on:  
+i) Whether the manipulation (B/c and H/L) affects stress of the participants.  
+ii) Whether or not to log transform the pp(perinasal perspiration) values.  
+iii) Performing anova and generalized linear model. Also comparison of the two models.  
+iv) Graphs and plots for visualization.  
+
+```{r include = FALSE, warning=FALSE}
+library(cowplot)
+library(lattice)
+
+mtd <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Narlakanti_Dinesh_2083649_HW10/Multitasking-Data.csv")
+mtd <- mtd[!is.na(mtd$PP_QC),]
+
+mtd_rb <- subset(mtd, mtd$Treatment == 'RB')
+mtd_dt <- subset(mtd, mtd$Treatment == 'DT')
+
+nrow(mtd_dt)
+nrow(mtd_rb)
+levels(factor(mtd_dt$Participant_ID))
+levels(factor(mtd_rb$Participant_ID))
+
+mtd_rba <- aggregate(mtd_rb$PP_QC, by = list( mtd_rb$Participant_ID, mtd_rb$Group), FUN = mean)
+mtd_dta <- aggregate(mtd_dt$PP_QC, by = list( mtd_dt$Participant_ID, mtd_dt$Group), FUN = mean)
+
+colnames(mtd_rba) <- c('Participant_ID', 'Treatment', 'PP_QC')
+colnames(mtd_dta) <- c('Participant_ID', 'Treatment', 'PP_QC')
+
+mtd_dta$norm_pp <- 0
+mtd_dta$norm_pp <- mtd_dta$PP_QC - mtd_rba$PP_QC
+mtd_dta$log_norm_pp <- log(mtd_dta$PP_QC) - log(mtd_rba$PP_QC)
+
+par(mfrow=c(1,2))
+qqnorm(mtd_dta$norm_pp)
+qqnorm(mtd_dta$log_norm_pp)
+
+mtd_dta$Treatment <- factor(mtd_dta$Treatment)
+mtd_dta$Email <- substr(mtd_dta$Treatment,1,1)
+mtd_dta$Stressor <- substr(mtd_dta$Treatment,2,2)
+
+mtd_dta$Email <- factor(mtd_dta$Email)
+mtd_dta$Stressor <- factor(mtd_dta$Stressor)
+
+#26.517 is the difference of null and residual deviace and 3 is the difference of their degrees of freedom.
+model_pvalue <- pchisq(26.517,3,lower.tail=FALSE)
+```
+### Checking whether to log tranform the delta_pp values:
+```{r echo = FALSE}
+
+par(mfrow=c(1,2))
+qqnorm(mtd_dta$norm_pp, main="Before log transformation")
+qqnorm(mtd_dta$log_norm_pp,main="After log tranformation")
+```
+As log-corrected values are more normalized, so, considering log corrected mean difference as response variable.   
+```{r include= FALSE}
+drop <- c("PP_QC", "norm_pp","Treatment")
+mtd_dta = mtd_dta[,!(names(mtd_dta) %in% drop)]
+```
+### Box-plots:
+```{r echo = FALSE}
+par(mfrow=c(1,3))
+boxplot(log_norm_pp ~ Email, data = mtd_dta, main="PP by Email",
+        xlab="Email type",ylab="PP")
+
+boxplot(log_norm_pp ~ Stressor, data = mtd_dta, main="PP by Stressor",
+        xlab="Stressor type",ylab="PP")
+
+boxplot(log_norm_pp ~ Email*Stressor, data=mtd_dta, ylab="PP", xlab="Email.Stressor",main="PP by Email.Stressor")
+```
+
+### Inference from above boxplots:  
+**1)** By looking at the box plots, we can say that there is no significance difference in the stress levels by manipulating participants into B/C and H/L.  
+**2)** From 'PP by Email', we can conclude that participants undergo little extra stress when they receive continual emails.  
+**3)** Also, the participants who doesn't know about the upcoming presentation had more stress arousal than the participants who already know the the upcoming presentation.  
+**4)** Although, there is no significance difference in the stress levels but from the data we have, we can say there is slight extra stress in the participants who received continual emails and doesn't know about the presentation(C.L). And has slight less stress in the participants who received continual emails and know about the presentation(C.H).  
+
+### ANOVA test results
+```{r echo = FALSE}
+#2way anova
+result <- aov(log_norm_pp ~ Email * Stressor, data = mtd_dta)
+summary(result)
+```
+
+### Inference from Anova results.  
+**1)** As p-value of Email mode(0.392) is greater than 0.05, we can conclude that there is no significant effects of it in participants' stress arousal.  
+**2)** As p-value of Anticipatory stress(0.223), which is again greater than 0.05, we can conclude that stressor also doesn't have any significant effect on participants' stress arousal.  
+**3)** p-value of the interaction is also grater than 0.05 (0.835), this reveals that there is no statistically significant interaction between Stressor and Email.  
+**4**) To support the above statement, below is the interaction plot of the stressor and email features. We can clearly observe, there is no interation between the features.    
+```{r echo = FALSE}
+interaction.plot(mtd_dta$Email, mtd_dta$Stressor,mtd_dta$log_norm_pp)
+```
+**5)** We can also confirm that there are no significant interactions from post-hoc test also. From the below post-hoc test, as there are no p-values less than 0.05, we can again conclude that there are no statistically significant interactions.  
+```{r echo = FALSE}
+TukeyHSD(result)
+```
+
+### Diagnostic plots:  
+
+```{r echo = FALSE}
+
+par(mfrow=c(2,2))
+plot(result)
+```
+  
+### Interpretations from diagnostic plots:
+
+**1)** Residuals vs Fitted: AS we have a horizontal line without any distinct pattern. We can conclude that we have linear relationship.  
+**2)** Normal Q-Q: All the residual points are following the dashed line, so, we can conclude that residuals are normally distributed.  
+**3)** Scale-Location: We have a horizontal line with equally spread points, this is great indication of homoscedasticity.  
+**4)** Residuals vs Leverage: When checked, there are 2 points(outliers) can be influential against a regression line. 
+
+### GLM test results  
+
+```{r echo = FALSE}
+#glm
+result_2 <- glm(log_norm_pp ~ Email * Stressor, data = mtd_dta)
+summary(result_2)
+```
+
+### Inferences from GLM test results. 
+**1)** One unit increase in the predictor variable 'EMailC' (Continual email mode) is associated with an average change on -0.02174 in the log odds of the response variable 'log_norm_pp' (difference of log corrected pp values) taking on a value of 1.  So, higher the value of 'EmailC' is associated with lower likelihood of 'log_norm_pp'.  
+**2)** As none of the features or interaction between the features have p-values less than 0.05, we can conclude that there are no statistically significant predictor variables in the model.  
+**3)** When calculated, P-value of the model is less than 0.05, we can conclude that model is highly useful.  
+```{r echo = FALSE}
+model_pvalue
+```
+**4)** When compared the 2 models(two way anova and glm) using anova(), we got Res.Df and RSS as same values and 0 df. So, we can conclude that two models are same.  
+```{r echo= FALSE}
+anova(result, result_2)
+```

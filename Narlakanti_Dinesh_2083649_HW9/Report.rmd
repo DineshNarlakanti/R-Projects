@@ -1,0 +1,85 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Statistical Methods – COSC	6323 - Home-Work-9 
+### By Dinesh Narlakanti (2083649)
+  
+________________________________________________________________________________  
+ 
+### INTRODUCTION  
+Students are divided into two groups and they are given an online talk about an essay they wrote to a panel of three examiners. The Not Informed (NI) group of students were not informed about the possibility of giving a talk, while the Informed (I) group received notice already.  
+
+This document majorly focuses on:  
+i) Whether judges emotion influence the emotion of the participants.  
+ii) Is there any difference of showcasing emotions between informed people and non informed people.  
+iii) While the stress increasing, whether the emotion is increasing or decreasing.  
+iv) While the agreeableness of the judges increases, whether emotion of the participants increasing or decreasing.  
+
+### GRAPHS
+```{r include = FALSE, warning=FALSE}
+library(tidyverse)
+library(grid)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(sjPlot)
+library(lme4)
+library(cowplot)
+
+mimicry_original <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Narlakanti_Dinesh_2083649_HW9/Presenter-Judges_n=39_FGSPB_PR_1HzMean_COSC6323_2022-04-06.csv")
+
+mimicry <- subset(mimicry_original, select = c('Participant_ID', 'Group', 'Seconds', 'F_SumEmoBinary', 'J_SumEmoBinary', 'PP_QC', 'BL_PP', 'BFI_Agreeableness'))
+names(mimicry)
+
+mimicry <- mimicry %>% drop_na(Participant_ID, F_SumEmoBinary, J_SumEmoBinary, PP_QC, BL_PP, BFI_Agreeableness)
+
+mimicry$delta_pp <- log(mimicry$PP_QC) - log(mimicry$BL_PP)
+
+mimicry <- mimicry %>% group_by((Participant_ID)) %>% mutate(delta_pp_mean = mean(delta_pp, na.rm = TRUE))
+
+mimicry$Participant_ID <- substr(mimicry$Participant_ID,3,4) 
+mimicry$Participant_ID <- as.numeric(mimicry$Participant_ID)
+
+mimicry$Group <- as.factor(mimicry$Group)
+mimicry$F_SumEmoBinary <- as.factor(mimicry$F_SumEmoBinary)
+mimicry$J_SumEmoBinary <- as.factor(mimicry$J_SumEmoBinary)
+
+mimicry$Group<- relevel(mimicry$Group,2)
+
+relation <- glmer(F_SumEmoBinary ~ (J_SumEmoBinary*Group) + (J_SumEmoBinary*delta_pp_mean) + (J_SumEmoBinary*BFI_Agreeableness) + (1|(Participant_ID)) , family = "binomial", 
+                data = mimicry)
+summary(relation)
+names(mimicry)
+```
+```{r echo = FALSE}
+a <- plot_model(relation,type="pred",terms="J_SumEmoBinary", title="")
+b <- plot_model(relation,type="pred",terms= "Group", title="")
+c <- plot_model(relation, type = "pred", terms = c("J_SumEmoBinary","Group"), title="")
+d <- plot_model(relation, type = 'pred', terms = "delta_pp_mean", title="")
+e <- plot_model(relation, type = 'pred', terms = "BFI_Agreeableness", title="")
+
+plot_grid(a,b,c,d,e)
+```
+
+### SUMMARY
+```{r echo= FALSE}
+summary(relation)
+```
+
+### OBSERVATION AND INFERENCES  
+
+**->** From (b), Probability of showing emotion falls from around 91% to around 72% for informed people. So, we can conclude that the people who know about the presentation shows less emotion during the presentation.  
+
+**->** From (a), We can deduce that, when judges move from neutral state to emotional state, the emotionality probability of the participants decreased from around 91% to around 90%. As the values are in opposite direction, we can say that participants show less mimicry with the judges.    
+
+**->** From (c), When judges are moving from neutral to emotional i.e., when judges show emotion, the informed people's probability of becoming emotional increased from around 72% to around 76% while probability of emotionality for non informed people decreases from around 92% to around 90%. By this we can deduce that, participants in informed group respond judges' emotions. For non informed people, they dont mimic the judges' emotions.       
+
+**->** From (d), we can clearly see that as the pp value (stress) increasing from -0.05 to 1, the emotionality probability of the participants also increases. So, higher the strees, higher is the chance of showing emotion duting the presentation.    
+
+**->** From (e), it is obvious that, the higher the agreeableness, the higher is the probability of showing emotion of the participants during the presentation. As the agreeableness score is increasing from 20 to 45, the chance of showing emotion is also increasing.  
+
+**->** Stress of the participants influences their expressions. We concluded this by their p-value (0.000287 ) which is less than 0.05 and we can reject the null.  
+
+**->** As p-value of agreeableness is (8.65e-07) which is less than 0.05, we can reject null and conclude that agreeableness score plays significant role in participants' expression.  

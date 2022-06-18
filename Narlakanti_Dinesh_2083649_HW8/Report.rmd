@@ -1,0 +1,157 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Statistical Methods – COSC	6323 - Home-Work-8 
+### By Dinesh Narlakanti (2083649)
+  
+________________________________________________________________________________  
+ 
+### INTRODUCTION  
+15 Medical students participated in 5-week training program on two procedures: cutting and suturing. Two graders evaluated their proficiency. During their performance, thermal imaging camera is used to calculate their perinasal perspiration values.  
+
+This document includes the factors invovlved in students' scoring and performance:  
+i) Session number (1,2,3,4,5)  
+ii) Task type (cutting and suturing)  
+iii) Arousal beyond their baseline.  
+
+### Problem Approach and Solution.  
+1. As physiology data has more subjects than the performance data, I extracted only the subjects' data from physiology data that matches with performace data.  
+2. Created a temp_data to store that mean perspiration values of physiology data grouped by subejct, day and session.  
+3. Separated baseline data from the cutting and suturing data.  
+4. Due to non-linearity of perspiration values, I normalised it by subtracting log transformed mean of baseline from log transformed mean of cutting and log transformed mean of baseline from log transformed mean of suturing.
+5. Took a separate dataset for each week by gathering their scores given by 2 scorers and later using rbind, combined all the weeks' data row wise.  
+6. Merged modified performace data and modified physiology data by subject, session and day.  
+7. Performed glm model.  
+8. Plotted the graphs for cutting and suturing.  
+
+### GRAPHS
+```{r include = FALSE}
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+
+
+performance_data <- read.csv("C:/Users/ndine/OneDrive/Desktop/MicrosurgeryPerformance.csv")
+physiology_data <- read.csv("C:/Users/ndine/OneDrive/Desktop/MicrosurgeryPhysiology.csv")
+
+perf_lev <- levels(factor(performance_data$ID))
+phy_lev <- levels(factor(physiology_data$Subject))
+
+physiology_data <- subset(physiology_data, physiology_data$Subject %in% perf_lev)
+levels(factor(physiology_data$Subject))
+nrow(physiology_data)
+
+temp_data <- physiology_data %>%
+  group_by(Subject, Day, Session) %>%
+  summarise(Perspiration = mean(Perspiration, na.rm = TRUE),
+            .groups = 'drop')
+
+nrow(temp_data)
+baseline_phy <- subset(temp_data, temp_data$Session == 'B')
+cut_sut_phy <- subset(temp_data, temp_data$Session != 'B')
+
+nrow(baseline_phy)
+nrow(cut_sut_phy)
+
+
+cut_sut_phy$normal <- 0
+cut_sut_phy$log_normal <- 0
+
+for (x in nrow(cut_sut_phy)){
+  if (cut_sut_phy$Subject == baseline_phy$Subject & cut_sut_phy$Day == baseline_phy$Day){
+    cut_sut_phy$log_normal <- log(cut_sut_phy$Perspiration) - log(baseline_phy$Perspiration)
+  }
+}
+#_____
+substrRight <- function(x, n){
+  substr(x, nchar(x)-n+1, nchar(x))
+}
+
+day1_performance_data <- performance_data[,c(1,8,9,10,11)]
+day1_performance_data <- drop_na(day1_performance_data)
+day1_gathered_data <- gather(day1_performance_data, "Task", "Score", -ID)
+day1_gathered_data$Scorer <- substrRight(day1_gathered_data$Task, 1)
+day1_gathered_data$Session <- substr(day1_gathered_data$Task, 7,7)
+day1_gathered_data$Day <- 1
+
+
+day2_performance_data <- performance_data[,c(1,15,16,17,18)]
+day2_performance_data <- drop_na(day2_performance_data)
+day2_gathered_data <- gather(day2_performance_data, "Task", "Score", -ID)
+day2_gathered_data$Scorer <- substr(day2_gathered_data$Task,10,10)
+day2_gathered_data$Session <- substr(day2_gathered_data$Task, 7,7)
+day2_gathered_data$Day <- 2
+
+day3_performance_data <- performance_data[,c(1,22,23,24,25)]
+day3_performance_data <- drop_na(day3_performance_data)
+day3_gathered_data <- gather(day3_performance_data, "Task", "Score", -ID)
+day3_gathered_data$Scorer <- substr(day3_gathered_data$Task,10,10)
+day3_gathered_data$Session <- substr(day3_gathered_data$Task, 7,7)
+day3_gathered_data$Day <- 3
+
+day4_performance_data <- performance_data[,c(1,29,30,31,32)]
+day4_performance_data <- drop_na(day4_performance_data)
+day4_gathered_data <- gather(day4_performance_data, "Task", "Score", -ID)
+day4_gathered_data$Scorer <- substr(day4_gathered_data$Task,10,10)
+day4_gathered_data$Session <- substr(day4_gathered_data$Task, 7,7)
+day4_gathered_data$Day <- 4
+
+day5_performance_data <- performance_data[,c(1,36,37,38,39)]
+day5_performance_data <- drop_na(day5_performance_data)
+day5_gathered_data <- gather(day5_performance_data, "Task", "Score", -ID)
+day5_gathered_data$Scorer <- substr(day5_gathered_data$Task,10,10)
+day5_gathered_data$Session <- substr(day5_gathered_data$Task, 7,7)
+day5_gathered_data$Day <- 5
+
+
+gathered_day <- rbind(day1_gathered_data, day2_gathered_data, day3_gathered_data, day4_gathered_data, day5_gathered_data)
+nrow(gathered_day)
+
+merged_data <- merge(x=gathered_day, y=cut_sut_phy, 
+      by.x = c("ID", "Session", "Day"), 
+      by.y = c("Subject", "Session", "Day"),
+      all.x=TRUE)
+merged_data$Score <- as.integer(merged_data$Score)
+
+cut_data <- subset(merged_data, merged_data$Session == 'C')
+sut_data <- subset(merged_data, merged_data$Session == 'S')
+
+
+plot1 <- ggplot(cut_data, aes(x=as.factor(Day), y=Score)) + 
+  geom_boxplot(fill="white", alpha=0.2) + scale_y_continuous(limits=c(5,30)) +
+  stat_summary(fun=mean, geom="point", shape=23, size=2.5, color="red", fill="red") + xlab("Session") + ylab("Score") + ggtitle("Cutting") + annotate('text', x = c(2, 3, 4, 5), y = 28, label = '0.000', col = 'red')
+
+
+plot2 <- ggplot(sut_data, aes(x=as.factor(Day), y=Score)) + 
+  geom_boxplot(fill="white", alpha=0.2) + scale_y_continuous(limits=c(5,30)) +
+  stat_summary(fun=mean, geom="point", shape=23, size=2.5, color="red", fill="red") + xlab("Session") + ylab("Score") + ggtitle("Suturing")+ annotate('text', x = c(2, 3, 4, 5), y = 28, label = '0.000', col = 'red')
+
+model1 <- glm(Score ~ Session + Task +log_normal + Scorer + (1|Day) ,data = merged_data)
+summary1 <- summary(model1)
+summary1
+
+cut_score <- aggregate(cut_data$Score, by = list(cut_data$Task, cut_data$ID), FUN = sum)
+sub1 <- subset(cut_score, cut_score$Group.2==1)
+cut_score_whole <- aggregate(cut_data$Score, by = list(cut_data$Task), FUN = sum)
+
+sut_score_whole <- aggregate(sut_data$Score, by = list(sut_data$Task), FUN = sum)
+sut_score_whole
+```
+```{r}
+plot_grid(plot1,plot2)
+```
+
+### ANALYSIS AND OBSERVATIONS  
+  
+-> Also, from the summary of glm (generalised linear model), as p value of every session is less than 0.05 (when rounded, 0 for every session) we can reject null and conclude score is significantly improving when progressed with 5 session.  
+-> P value for Task suturing is less than 0.05 (0.00388), null hypothesis is rejected here and can conclude that suturing has negative impact on score. In other words, score is decreased in suturing task and also can say score is affected by suturing task. When compared scores of cutting and suturing procesudes, scores of suturing are less than that of cutting.    
+-> For normalised perinasal perspiration, p values is greater than 0.05 (0.36179), so we can accept the null hypothesis and conclude that it is significantly independent to the score. In other words, pp value doesn't affect and is unrelated to student's performance. They are unrelated because they are moderate and students are not under deep stress while doing the procedures.     
+-> When performing new or different tasks, people will be under stress but surprisingly we dont find any stress theoretically in this way of experiment. May be when more significant factors like high scores are rewarded with money and low scores are rewarded with punishment will stress the subjects.  
+-> Grader/scorer also doesn't affect the scores of the students because p value here is greater than 0.05 (0.91238). So, we can reject null hypothesis and conclude scorer is also independent. In other words, we can say that there is no bias in scoring by the graders.    
+-> As Professor mentioned, I handled PP value by second method, I first found mean baseline for each subject and subtracted it from cutting PP and suturing PP. I found this helpful and relatable because they are missing values in the data, some subjects didn't perform suturing and some didn't perform cuting procedures during the experiment.  
+-> From the plotted graph, we can clearly say that score of the participants is increased from week-1 to week-5. When calculated, Subject 1's score increased from 38 to 45 (Check 'sub1' variable value from rfile for reference). And when taken session wise, score for cutting procedure increased from 500 to 704 ('cut_score_whole' for reference).      
+-> When checked the week wise values of cutting and suturing procedures, I observed that in every  week, students are scoring more in cutting than in suturing. Values ranged from 500-704 for cutting and 442-675 for suturing. (cut_score_whole and sut_score_whole for reference).

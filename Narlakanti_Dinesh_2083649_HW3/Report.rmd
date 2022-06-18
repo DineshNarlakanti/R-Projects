@@ -1,0 +1,140 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Statistical Methods – COSC	6323 - HomeWork-3  
+### By Dinesh Narlakanti (2083649)  
+  
+________________________________________________________________________________  
+  
+### INTRODUCTION  
+  
+More than 2,50,000 participants from Texas A&M University, University of Houston and University of California, Irvine. The data in this document has information about the participants who recorded their heart beat rate(Chest and Wrist) and breathe rate while performing different tasks i.e; Resting Baseline (RB, )Single task(ST), Priming (PM), Relaxing Video(RV), Dual Task (DT) and Presentation (PR).  
+  
+This report purely concentrates on the difference of  
+i) Heart rate(Chest and Wrist) in RB and PR experiments,    
+ii) Breathe rate in RB and PR experiments.   
+
+### GETTING STARTED WITH THE HOMEWORK
+
+
+**Step-1:**Reading the file and counting the number of rows.
+
+```{r}
+psy_data <- read.csv("C:/Users/ndine/OneDrive/Desktop/Physiological Data.csv")
+
+nrow(psy_data)
+```
+
+**Step-2:**Sub-setting participants who are undergoing RB treatment and PR treatment and then aggregating them based on participant ID.
+```{r}
+data_rb <- subset(psy_data, psy_data$Treatment=="RB")
+
+
+chest_HR <- aggregate(data_rb$Chest_HR_QC, by = list(data_rb$Participant_ID), FUN = mean)
+
+wrist_HR <- aggregate(data_rb$Wrist_HR_QC, by = list(data_rb$Participant_ID), FUN = mean)
+
+br_rb <- aggregate(data_rb$BR_QC, by = list(data_rb$Participant_ID), FUN = mean)
+
+data_pr <- subset(psy_data, psy_data$Treatment=="PR")
+
+chest_pr <- aggregate(data_pr$Chest_HR_QC, by = list(data_pr$Participant_ID), FUN = mean)
+
+wrist_pr <- aggregate(data_pr$Wrist_HR_QC, by = list(data_pr$Participant_ID), FUN = mean)
+
+br_pr <- aggregate(data_pr$BR_QC, by = list(data_pr$Participant_ID), FUN = mean)
+```
+
+**Step-3:**Removing NAs from data to calculate mean for plotting abline() in the graph. 
+```{r}
+ch <- chest_HR[!is.na(chest_HR$x),]
+wh <- wrist_HR[!is.na(wrist_HR$x),]
+br <- br_rb[!is.na(br_rb$x),]
+
+ch_pr <- chest_pr[!is.na(chest_pr$x),]
+wh_pr <- wrist_pr[!is.na(wrist_pr$x),]
+brpr <- br_pr[!is.na(br_pr$x),]
+```
+
+**Step-4:**Plotting barplots of all the rates (Chest, Wrist and Breath) and experiments (RB and PR).  
+In RB experiment, Green line indicates the resting heart rate and resting breathe rate. Red line indicates the mean heart rate and mean breathing rate.  
+In PR experiment, black line indicates the stress level line(85 for heart rate and 16 for breathe rate). Red line indicates the mean heart rate and mean breathe rate. 
+```{r}
+par(mfrow=c(2,3))
+
+boxplot(chest_HR$x, main = "RB session Chest HR", xlab = 'Heart Rate', col = "steelblue", horizontal = TRUE)
+abline(v= mean(ch$x), col = 'red')
+abline(v=75, col = 'green')
+
+boxplot(wrist_HR$x, main = "RB session Wrist HR", xlab = 'Heart Rate', col = "steelblue", horizontal = TRUE)
+abline(v= mean(wh$x), col = 'red')
+abline(v=75, col = 'green')
+
+boxplot(br_rb$x, main = "RB session Breath Rate", xlab = 'Breathe Rate', col = "steelblue", horizontal = TRUE)
+abline(v= mean(br$x), col = 'red')
+abline(v=14, col = 'green')
+
+boxplot(chest_pr$x, main = "PR session Chest HR", xlab = 'Heart Rate', col = "steelblue", horizontal = TRUE)
+abline(v= mean(ch_pr$x), col = 'red')
+abline(v=85)
+
+boxplot(wrist_pr$x, main = "PR session Wrist HR", xlab = 'Heart Rate', col = "steelblue", horizontal = TRUE)
+abline(v= mean(wh_pr$x), col = 'red')
+abline(v=85)
+
+boxplot(br_pr$x, main = "PR session Breath Rate", xlab = 'Breathe Rate', col = "steelblue", horizontal = TRUE)
+abline(v= mean(brpr$x), col = 'red')
+abline(v=16)
+```
+
+**Step-4:**t.test and its results
+```{r}
+t.test(chest_HR$x, alternative = "two.sided", mu= 75)
+
+t.test(wrist_HR$x, alternative = "two.sided", mu= 75)
+
+
+
+t.test(br_rb$x, alternative = "two.sided", mu = 14)
+
+t.test(chest_pr$x, alternative = "greater", mu= 85)
+
+t.test(wrist_pr$x, alternative = "greater", mu= 85)
+
+t.test(br_pr$x, alternative = "greater", mu= 16)
+```
+
+### Question & Answers:
+**Q) Test whether the sample heart rate mean in the Resting Baseline (RB) of the experiment differs from the resting heart rate of the adult human population. Interpret the result of the test **  
+**A)** **For Chest HR:** As p-value is less than 0.05 (0.01905), alternate hypothesis is true. And hence mean of sample heart rate is **different** from resting heart rate.  
+**For Wrist HR:** P value less than 0.05 (0.02103), so, alternate hypothesis is true. And we can conclude that mean of sample heart rate is **different** from resting heart rate.   
+Mean of sample heart rate for both chest and wrist is **different and greater** than resting heart rate.  
+**To verify:** p-value is less than 0.05, alternate hypothesis is true here.  
+```{r}
+t.test(chest_HR$x, alternative = "greater", mu= 75)
+
+t.test(wrist_HR$x, alternative = "greater", mu= 75)
+```
+
+**Q) Test whether the sample breathing rate mean in the Resting Baseline (RB) of the experiment differs from the resting breathing rate of the adult human population. Interpret the result of the test.**  
+**A)**  When ran t.test for breathe rate for the participants in RB experiments, the alternate hypothesis obtained here is 'true mean in not equal to 14' and the hypothesis is false as p-value is greater than 0.05 (0.1573).  
+**To verify:** When alternative as greater and we are getting p value less than 0.05 and near to zero. So, sample heart rate is **different and is greater** than resting breathe rate.  
+So, we can conclude that sample breathing rate is **different** than resting breathe rate.  
+```{r}
+t.test(br_rb$x, alternative = "greater", mu = 14)
+```
+**Q) In the Presentation session, are the subjects stressed or not in terms of mean heart rate?**
+**A)** When we took a subset of PR experiment from original data, aggregated by participant ID and then ran t.test on mean chest heart rate putting alternative as greater and mu as 85, we got alternative hypothesis as 'true mean is greater than 85' and p value is less than 0.05 (0.02456).  
+**We can conclude that participants are in stress during presentation session according to chest heart rate.**  
+But according to the **wrist band**, the participants are **not in stress** during 5 minute oral presentation. We got to know this while running t.test on sample mean wrist heart rate putting alternative as greater and mu as 85. The result of this test tells that mean is  greater than 85 with p value greater than 0.05 (0.9801). As p values is greater than 0.05, the alternate hypothesis is not true.  
+
+**Q) In the Presentation session, are the subjects stressed or not in terms of mean breathing rate? Does the conclusion here agrees with the conclusion in Question 3? Try to explain the result.**  
+**A)** The breathe rate in PR experiment concludes that participants are **not in stress**. As p value is greater than 0.05 (1), so, the given alternate hypothesis i.e; 'true mean is greater than 16' is not valid.
+
+**The conclusion for Chest heart rate and Breathe rate in PR Experiment is not same and they are opposite.**  
+**To verify:** Here, the alternate hypothesis is true, as p-value is less than 0.05 (near to zero.)
+```{r}
+t.test(br_pr$x, alternative = "less", mu= 16)
+```

@@ -1,0 +1,95 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Statistical Methods – COSC	6323 - HomeWork-11  
+### By Dinesh Narlakanti (2083649)  
+  
+________________________________________________________________________________  
+  
+### INTRODUCTION  
+
+A national wide survey of U.S.academics was conducted and around 400 intellectuals from 70 phD granting
+institutions, who excelled in the competitive grant process participated and filled a Core Questionnaire (CQ)
+which includes questions on their behavioral characteristics, proposal tactics, time they spend on research,
+sleep and other important things they do regularly. This survey and analysis of it concludes that long research
+hours and thoughtful choices are the primary reason for the grantsmanship and academic fame is the secondary
+reason for grantsmanship.
+
+This document includes 2d contingency table. Also we'll check the homogeneity and interpretations from the obtained plots and graphs.  
+
+```{r include = FALSE}
+library(corrplot)
+alldata <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Narlakanti_Dinesh_2083649_HW11/AllData.csv")
+
+rank_gender <- table(alldata$Gender, alldata$Rank)
+chisqt <- chisq.test(alldata$Rank, alldata$Gender)
+```
+
+
+### Graphs  
+```{r echo = FALSE}
+x=seq(0,20,length=200)
+y=dchisq(x,2)
+plot(x,y,type="l",col="blue")
+
+x2=seq(chisqt$statistic,20,length=100)
+y2=dchisq(x2,2)
+
+polygon(c(chisqt$statistic,x2,20),c(0,y2,0),col="red")
+arrows(chisqt$statistic,0.13,chisqt$statistic,0.08)
+text(chisqt$statistic,0.13,"9.392",pos=3)
+```
+
+```{r echo = FALSE}
+
+barplot(prop.table(rank_gender,2)*100,beside=TRUE,legend.text=TRUE,
+        ylab="% of Proportions", ylim = c(0,100), col=c("pink","blue"))
+box()
+
+
+corrplot(chisqt$residuals, is.cor = FALSE)
+```
+
+
+
+### Contigency Table:
+```{r echo = FALSE}
+rank_gender
+```
+### Chi-square Results:
+```{r echo = FALSE}
+chisqt
+```
+### Expected and Observed values: 
+
+```{r echo = FALSE}
+chisqt$expected
+
+chisqt$observed
+```
+### Contribution in percentage(%):
+```{r echo = FALSE}
+contrib <- 100*chisqt$residuals^2/chisqt$statistic
+round(contrib, 3)
+```
+
+### OBSERVATIONS AND INFERENCES  
+**->** As the p-value of chi square test is less than 0.05 (0.009132), we can reject the null hypothesis and conclude that row(Gender) and column(Rank) variables are dependent and are not significantly associated. This tells that there is no homogeneity.  
+
+**->** In other words, we can also conclude that Gender (Male and Female) are not equally distributed in Ranks(Assistant Professor, Associate Professor and Professor).  
+
+**->** Although there is no significant association. But from the pearson visualization plot(based on residuals), we can interpret the association between Rank and Gender(whatever they have). From the plot, it is evident that there is an association between **Female** Gender and **Assistant Professor, Associate Professor** Ranks. Also, there is association between **Male** Gender and **Professor** Rank. We are interpreting this as the above associations have positive residuals. Positive association indicates that, as one variable increases, the other also increases.        
+
+**->** In addition, There is negative association between **Male** Gender and **Assistant Professor, Associate Professor** ranks. Also, there is high negative association between **Female** Gender and **Professor** rank. Interpreted as they have negative residuals. Negative association indicates that, as one variable increases, the other also decreases.  
+
+**->** From the contribution percentages, we can also observe that, (Female/Assistant Professor - 12.910) (Female/Associate Professor - 19.815) (Female/Professor - 34.769) and (Male/Professor - 16.745) contribute highly to the chi-square score. These account for the most of the difference between the expected and observed values.  
+
+**->** From the proportions of contingency table, we can infer that Most of Female participants are Professors (49) and Most of the Male participants are also Professors (146). Very few of the Female and Male participants are Assistant Professors (37 and 58 respectively).
+
+**->** Also, from the barplot, we can clearly see that the distribution between male and female is almost similar in Assistant Professor and Associate Professor Ranks but there is a huge difference in Professor Rank.  
+
+**->** The chi-square distribution for 2df(2 rows and 3 columns) with 5% confidence interval and its corresponding chi square value is 9.392002. This 5% probability is shown to the right of the critical chi-square value. In our case, representing a 5% probability that a value is drawn randomly from the distribution will exceed the critical chi-square of 9.392002.  
+From the chi-square distribution graph, we can say that, 
+

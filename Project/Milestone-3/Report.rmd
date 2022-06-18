@@ -1,0 +1,796 @@
+---
+output:
+  pdf_document: default
+  word_document: default
+  html_document: default
+---
+# Statistical Methods – COSC	6323 - Project-Milestone 3 
+### By Dinesh Narlakanti (2083649) and Adarsh Chagantipati (2054031)
+  
+________________________________________________________________________________  
+
+## INTRODUCTION  
+
+A national wide survey of U.S.academics was conducted and around 400 intellectuals from 70 phD granting institutions, who excelled in the competitive grant process participated and filled a Core Questionnaire (CQ) which includes questions on their behavioral characteristics, proposal tactics, time they spend on research, sleep and other important things they do regularly. This survey and analysis of it concludes that long research hours and thoughtful choices are the primary reason for the grantsmanship and academic fame is the secondary reason for grantsmanship. 
+
+This document includes code development, analytic observations and visualization of Number of proposals, Typical Week Research, Extroversion, Agreeableness, Openness, Funding Agency, Break Frequency, Pilot Research, Deadline Stress, Trait Anxiety, Avoidance coping  
+
+## Steps and its Description:  
+
+1. Installed required packages and libraries. And imported all_data and key_data.     
+2. For s30: assigned 0 to less than 30% success rate and 1 to greater than 30% success rate.    
+3. For s50: assigned 0 to less than 50% success rate and 1 to greater than 50%success rate.    
+4. For s75: assigned 0 to less than 75% funding and 1 to more than 75% funding.    
+5. For sdd: assigned 0 to for not fully funded participants and 1 to fully funded.    
+6. Changed P_AR of all_data to PR in key_data.    
+7. Changed all categorical predictors such as NP FA SA BF PR T RS WH AP and DWH to factors.    
+8. Performed below steps (9-17) for s30, s50, s75, sdd and s50dd tables:  
+9. Performed forward model starting with null model until it is optimized.    
+10. Performed step wise model until it is optimized.    
+11. Performed backward model starting with full model until it is optimized.     
+12. Created a data frame of the coefficients obtained from above optimized models.  
+13. Calculated and added extra column for the data frame as Prob-wise using formula: exp(coefficient)/(1+exp(coefficient)  
+14. Rearranged columns of the data frame.  
+15. Rounded P-values to 3 digits.  
+16. For clear interpretation, created a significance column.    
+17. Created a table of data frame using tab_df
+18. Visualized all the above regression models using effect_plot and plot_model
+
+```{r, include=FALSE}
+
+library(olsrr)
+library(lme4)
+library(sjPlot)
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+library(ggplot2)
+library(jtools)
+library(gridExtra)
+library(tidyverse)
+library(MASS)
+library(knitr)
+library(ggeasy)
+library(ggpubr)
+library(grid)
+
+all_data <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Project/Milestone-3/Data/AllData.csv")
+key_data <- read.csv("C:/Users/ndine/Semester 2/Stats cosc 6323/Project/Milestone-3/Data/KeyData.csv")
+
+levels(factor(all_data$P_SR))
+levels(factor(key_data$FC))
+key_data$s30 <- ifelse(all_data$P_SR %in% c("< 10%", "10-20%", "20-30%"),0,1)
+key_data$s50 <- ifelse(all_data$P_SR %in% c("50-75%","75-90%", "> 90%"),1,0)
+key_data$s75 <- ifelse(key_data$FC %in% c(5,6),1,0)
+key_data$sdd <- ifelse(key_data$FC %in% c(6),1,0)
+key_data$s50dd <- ifelse((key_data$s50 == 1 & key_data$sdd == 1),1,0)
+head(key_data)
+
+
+levels(factor(all_data$P_AR))
+
+key_data$PR <- ifelse(all_data$P_AR == "< 1 month",1,
+                      ifelse(all_data$P_AR == "1-3 months", 2,
+                             ifelse(all_data$P_AR == "3-6 months", 3,
+                                    ifelse(all_data$P_AR == "6-12 months", 4,
+                                           ifelse(all_data$P_AR == "> 12 months",5,0 )))))
+
+head(key_data)
+key_data$NP <- factor(key_data$NP)
+key_data$FA <- factor(key_data$FA)
+key_data$DS <- factor(key_data$DS)
+key_data$BF <- factor(key_data$BF)
+key_data$PR <- factor(key_data$PR)
+key_data$T <- factor(key_data$T)
+key_data$RS <- factor(key_data$RS)
+key_data$WH <- factor(key_data$WH)
+key_data$AP <- factor(key_data$AP)
+key_data$DWH <- factor(key_data$DWH)
+
+```
+```{r, include=FALSE}
+s30_fullmodel <- glm(s30 ~ NASA + Rank + NP + FA + DS + BF + PR + RS + T + WH + AP + DWH + TA + E + A + C + N + O + AC +EC + TC + H + TWR + DWR , data = key_data, family = "binomial")
+s30_first <- summary(s30_fullmodel)
+#forward
+s30_forward <- stepAIC(s30_fullmodel, direction = "forward")
+summary(s30_forward)
+s30_forward_second <- glm(s30 ~ NP + FA + PR+RS +TA + H, data = key_data, family = 'binomial')
+summary(s30_forward_second)
+s30_forward_third <- glm(s30 ~ NP + FA  +TA + H, data = key_data, family = 'binomial')
+summary(s30_forward_third)
+#AIC reducing while adding DS
+s30_forward_fourth <- glm(s30 ~ NP + FA  +TA + H+ DS, data = key_data, family = 'binomial')
+summary(s30_forward_fourth)
+#both
+s30_both <- stepAIC(s30_fullmodel, direction = "both")
+summary(s30_both)
+s30_both_second <- glm(s30 ~NP+FA+TA+H, data = key_data, family= 'binomial')
+summary(s30_both_second)
+s30_both_third <- glm(s30 ~ NP +FA+TA+H+DS, data = key_data, family= 'binomial')
+summary(s30_both_third)
+#backward
+s30_backward <- stepAIC(s30_fullmodel, direction = "backward")
+summary(s30_backward)
+s30_second <- glm(s30 ~ NP + FA + TA + H + DS, data = key_data, family = "binomial")
+s30_second_backward <- stepAIC(s30_second, direction = "backward")
+summary(s30_second_backward)
+s30_table <- data.frame(coefficients(summary(s30_second_backward)), check.names = FALSE)
+s30_table$Prob_wise <- exp(s30_table$Estimate)/(1+exp(s30_table$Estimate))
+s30_table$Predictor <- c('Intercept', 'NP2', 'NP3', 'FA-NIH', 'FA-DOE', 'FA-DOD', 'FA-NASA', 'FA-OT', 'TA', 'H', 'DS2')
+s30_table <- dplyr::select(s30_table, 6,5,1,2,3,4)
+colnames(s30_table) <- c('Predictor', 'Prob-wise','Odds-wise', 'Std. Error', 'z value', 'Pr(>|z|)')
+s30_table$`Pr(>|z|)` <- round(s30_table$`Pr(>|z|)`, digits =3)
+s30_table$`Pr(>|z|)`[s30_table$`Pr(>|z|)` == 0.000] <- '<0.001'
+s30_table$"." <- ifelse(s30_table$`Pr(>|z|)` == '<0.001','***',ifelse(s30_table$`Pr(>|z|)`<0.01,'**',ifelse(s30_table$`Pr(>|z|)`<0.05,'*'," ")))
+tab_df(s30_table, digits = 3)
+```
+```{r, include=FALSE}
+s50_fullmodel <- glm(s50 ~ Rank + NP + FA + DS + BF + PR + RS + T + WH + AP + DWH + TA + E + A + C + N + O + AC +EC + TC + H + TWR + DWR, data = key_data, family = "binomial")
+s50_first <- summary(s50_fullmodel)
+#forward
+s50_forward <- stepAIC(s50_fullmodel, direction = "forward")
+summary(s50_forward)
+s50_forward_second <- glm(s50~NP+FA+BF+PR+E+H+AC+DS, data = key_data, family = 'binomial')
+summary(s50_forward_second)
+#both
+s50_both <- stepAIC(s50_fullmodel, direction = "both")
+summary(s50_both)
+s50_both_second <- glm(s50 ~ NP+FA+DS+BF+PR+E+AC+H+DS, data = key_data, family = 'binomial')
+summary(s50_both_second)
+#backward
+s50_backward <- stepAIC(s50_fullmodel, direction = "backward")
+summary(s50_backward)
+s50_second <- glm(s50 ~ NP + FA + BF + PR + E + AC + H + DS , data = key_data, family = "binomial")
+summary(s50_second)
+s50_second_backward <- stepAIC(s50_second, direction = "backward")
+s50_table <- data.frame(coefficients(summary(s50_second)), check.names = FALSE)
+s50_table$Prob_wise <- exp(s50_table$Estimate)/(1+exp(s50_table$Estimate))
+s50_table$Predictor <- c('Intercept', 'NP2', 'NP3', 'FA-NIH', 'FA-DOE', 'FA-DOD', 'FA-NASA', 'FA-OT', 'BF2', 'PR2', 'PR3', 'PR4', 'PR5' , 'E', 'AC', 'H', 'DS2')
+s50_table <- dplyr::select(s50_table, 6,5,1,2,3,4)
+colnames(s50_table) <- c('Predictor', 'Prob-wise','Odds-wise', 'Std. Error', 'z value', 'Pr(>|z|)')
+s50_table$`Pr(>|z|)` <- round(s50_table$`Pr(>|z|)`, digits =3)
+s50_table$`Pr(>|z|)`[s50_table$`Pr(>|z|)` == 0.000] <- '<0.001'
+s50_table$"." <- ifelse(s50_table$`Pr(>|z|)` == '<0.001','***',ifelse(s50_table$`Pr(>|z|)`<0.01,'**',ifelse(s50_table$`Pr(>|z|)`<0.05,'*'," ")))
+tab_df(s50_table, digits = 3)
+
+s75_fullmodel <- glm(s75 ~ Rank + NP + FA + DS + BF + PR + RS + T + WH + AP + DWH + TA + E + A + C + N + O + AC +EC + TC + H + TWR + DWR, data = key_data, family = "binomial")
+s75_first <- summary(s75_fullmodel)
+#Forward
+s75_forward <- stepAIC(s75_fullmodel, direction = "forward")
+summary(s75_forward)
+s75_second_forward <- glm(s75 ~ FA + RS +T+WH+E+TWR, data = key_data, family = 'binomial')
+summary(s75_second_forward)
+s75_third_forward <- glm(s75 ~ FA + RS +T+O+TWR, data = key_data, family = 'binomial')
+summary(s75_third_forward)
+s75_fourth_forward <- glm(s75 ~ FA + RS +T+O+TWR+H, data = key_data, family = 'binomial')
+summary(s75_fourth_forward)
+#Both
+s75_both <- stepAIC(s75_fullmodel, direction = "both")
+summary(s75_both)
+s75_both_second <- glm(s75 ~ FA+RS+T+E+O+H+TWR, data= key_data, family='binomial')
+summary(s75_both_second)
+s75_both_third <- glm(s75 ~ FA+RS+T+O+H+TWR, data= key_data, family='binomial')
+summary(s75_both_third)
+#Backward
+s75_backward <- stepAIC(s75_fullmodel, direction = "backward")
+summary(s75_backward)
+s75_second <- glm(s75 ~ FA + RS + T + E + O + H + TWR, data = key_data, family = "binomial")
+s75_second_backward <- stepAIC(s75_second, direction = "backward")
+summary(s75_second_backward)
+s75_third <- glm(s75 ~ FA + RS + T + O + H + TWR, data = key_data, family = "binomial")
+s75_third_backward <- stepAIC(s75_third, direction = "backward")
+summary(s75_third_backward)
+s75_table <- data.frame(coefficients(summary(s75_third_backward)), check.names = FALSE)
+s75_table$Prob_wise <- exp(s75_table$Estimate)/(1+exp(s75_table$Estimate))
+s75_table$Predictor <- c('Intercept', 'FA-NIH', 'FA-DOE', 'FA-DOD', 'FA-NASA', 'FA-OT', 'RS2', 'TS2', 'O', 'H', 'TWR')
+s75_table <- dplyr::select(s75_table, 6,5,1,2,3,4)
+colnames(s75_table) <- c('Predictor', 'Prob-wise','Odds-wise', 'Std. Error', 'z value', 'Pr(>|z|)')
+s75_table$`Pr(>|z|)` <- round(s75_table$`Pr(>|z|)`, digits =3)
+s75_table$`Pr(>|z|)`[s75_table$`Pr(>|z|)` == 0.000] <- '<0.001'
+s75_table$"." <- ifelse(s75_table$`Pr(>|z|)` == '<0.001','***',ifelse(s75_table$`Pr(>|z|)`<0.01,'**',ifelse(s75_table$`Pr(>|z|)`<0.05,'*'," ")))
+tab_df(s75_table, digits = 3)
+
+sdd_fullmodel <- glm(sdd ~ Rank + NP + FA + DS + BF + PR + RS + T + WH + AP + DWH + TA + E + A + C + N + O + AC +EC + TC + H + TWR + DWR, data = key_data, family = "binomial")
+sdd_first <- summary(sdd_fullmodel)
+#forward
+sdd_forward <- stepAIC(sdd_fullmodel, direction = "forward")
+summary(sdd_forward)
+sdd_forward_second <- glm(sdd ~ FA+PR+O+TWR, data = key_data, family = 'binomial')
+summary(sdd_forward_second)
+sdd_forward_third <- glm(sdd ~ FA+O+TWR, data = key_data, family = 'binomial')
+summary(sdd_forward_third)
+#both
+sdd_both <- stepAIC(sdd_fullmodel, direction = "both")
+summary(sdd_both)
+sdd_both_second <- glm(sdd ~ FA +O+TWR, data = key_data, family = 'binomial')
+summary(sdd_both_second)
+#backward
+sdd_backward <- stepAIC(sdd_fullmodel, direction = "backward")
+summary(sdd_backward)
+sdd_second <- glm(sdd ~ FA + O + TWR, data = key_data, family = "binomial")
+sdd_second_backward <- stepAIC(sdd_second, direction = "backward")
+summary(sdd_second_backward)
+sdd_table <- data.frame(coefficients(summary(sdd_second_backward)), check.names = FALSE)
+sdd_table$Prob_wise <- exp(sdd_table$Estimate)/(1+exp(sdd_table$Estimate))
+sdd_table$Predictor <- c('Intercept', 'FA-NIH', 'FA-DOE', 'FA-DOD', 'FA-NASA', 'FA-OT','O', 'TWR')
+sdd_table <- dplyr::select(sdd_table, 6,5,1,2,3,4)
+colnames(sdd_table) <- c('Predictor', 'Prob-wise','Odds-wise', 'Std. Error', 'z value', 'Pr(>|z|)')
+sdd_table$`Pr(>|z|)` <- round(sdd_table$`Pr(>|z|)`, digits =3)
+sdd_table$`Pr(>|z|)`[sdd_table$`Pr(>|z|)` == 0.000] <- '<0.001'
+sdd_table$"." <- ifelse(sdd_table$`Pr(>|z|)` == '<0.001','***',ifelse(sdd_table$`Pr(>|z|)`<0.01,'**',ifelse(sdd_table$`Pr(>|z|)`<0.05,'*'," ")))
+tab_df(sdd_table, digits = 3)
+
+s50dd_fullmodel <- glm(s50dd ~ Rank + NP + FA + DS + BF + PR + RS + T + WH + AP + DWH + TA + E + A + C + N + O + AC +EC + TC + H + TWR + DWR, data = key_data, family = "binomial")
+summary(s50dd_fullmodel)
+#forward
+s50dd_forward <- stepAIC(s50dd_fullmodel, direction = "forward")
+summary(s50dd_forward)
+s50dd_forward_second <- glm(s50dd ~ NP+FA+PR+E+A+TWR,data=key_data, family = 'binomial')
+summary(s50dd_forward_second)
+s50dd_forward_third <- glm(s50dd ~ NP+E+A+TWR,data=key_data, family = 'binomial')
+summary(s50dd_forward_third)
+#both
+s50dd_both <- stepAIC(s50dd_fullmodel, direction = "both")
+summary(s50dd_both)
+s50dd_both_second <- glm(s50dd ~ NP+E+A+TWR, data= key_data, family = 'binomial')
+summary(s50dd_both_second)
+#backward
+s50dd_backward <- stepAIC(s50dd_fullmodel, direction = "backward")
+s50dd_first <- summary(s50dd_backward)
+s50dd_second <- glm(s50dd ~ NP + E + A + TWR, data = key_data, family = "binomial")
+s50dd_second_backward <- stepAIC(s50dd_second, direction = "backward")
+summary(s50dd_second_backward)
+stepAIC(s50dd_fullmodel, direction = "both")
+s50dd_table <- data.frame(coefficients(summary(s50dd_second_backward)), check.names = FALSE)
+s50dd_table$Prob_wise <- exp(s50dd_table$Estimate)/(1+exp(s50dd_table$Estimate))
+s50dd_table$Predictor <- c('Intercept', 'NP2', 'NP3', 'E', 'A', 'TWR')
+s50dd_table <- dplyr::select(s50dd_table, 6,5,1,2,3,4)
+colnames(sdd_table) <- c('Predictor', 'Prob-wise','Odds-wise', 'Std. Error', 'z value', 'Pr(>|z|)')
+s50dd_table$`Pr(>|z|)` <- round(s50dd_table$`Pr(>|z|)`, digits =3)
+s50dd_table$`Pr(>|z|)`[s50dd_table$`Pr(>|z|)` == 0.000] <- '<0.001'
+s50dd_table$"." <- ifelse(s50dd_table$`Pr(>|z|)` == '<0.001','***',ifelse(s50dd_table$`Pr(>|z|)`<0.01,'**',ifelse(s50dd_table$`Pr(>|z|)`<0.05,'*'," ")))
+tab_df(s50dd_table, digits = 3)
+
+s30_lm <- glm(s30 ~ NP + FA +  H + DS +  TA , data = key_data, family = "binomial")
+s50_lm <- glm(s50 ~ NP + FA + BF + PR + H + E + AC , data = key_data, family = "binomial")
+s75_lm <- glm(s75 ~ FA + T + TWR + H + RS + O, data = key_data, family = "binomial")
+sdd_lm <- glm(sdd ~ FA + TWR + O, data = key_data, family = "binomial")
+s50dd_lm <- glm(s50dd ~ NP + TWR + E + A, data = key_data, family = "binomial")
+
+NP_type <- c("NP1", "NP2", "NP3")
+FA_type <- c('NSF', 'NIH', 'DOE', 'DOD', 'NASA', 'OT')
+BF_type <- c('BF1', 'BF2')
+PR_type <- c('PR1','PR2','PR3','PR4','PR5')
+DS_type <- c('DS1','DS2')
+TS_type <- c('TS1', 'TS2')
+RS_type <- c('RS1', 'RS2')
+```
+```{r, include=FALSE}
+set_theme( base = theme_classic(), axis.linecolor = "white") 
+
+
+#EFFECT PLOT
+
+
+NP_30 <- effect_plot(model = s30_lm, pred = NP,colors = c('grey', 'red', 'red'), pred.labels = NP_type,
+                      rescale.axis=F, ylim = c(0,100),
+                      cat.interval.geom = c('linerange'))+ theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 10,face="bold"))+labs(x="",y= expression('S'^'G30'), title = "Number of Proposals")+ scale_x_discrete(breaks=c(1,2,3),labels=c("NP1","NP2","NP3"))+ scale_y_continuous(labels = scales::percent_format(), limits=c(0,1))+theme( axis.text = element_text(size = 8, face = "bold")) +theme(legend.position="none", axis.ticks = element_blank())+easy_center_title()
+```
+```{r, include=FALSE}
+FA_30 <- effect_plot(model = s30_lm, pred = FA, colors = c('grey', 'black', 'black', 'darkgoldenrod2', 'black', 'darkgoldenrod2'),cat.interval.geom = c('linerange')) + theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 10,face="bold"))+labs(x="",y="", title = "Funding Agencies")+scale_x_discrete(breaks=c(1,2,3,4,5,6),labels=c("NSF","NIH","DOE","DOD","NASA","OT"))+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+BF_30 <- ggplot() + geom_blank()+
+  theme(axis.text = element_text(size = 4, face = "bold"), axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.ticks.x = element_blank(), plot.title = element_text(hjust = 0.5), panel.border = element_rect(colour = "black", fill = NA, size = 1), panel.background = element_rect(fill='transparent'), plot.background = element_rect(fill='transparent', color=NA), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), legend.background = element_rect(fill='transparent'), legend.box.background = element_rect(fill='transparent')) + ggtitle("Break Frequency")+theme(plot.title = element_text(size =10 , face = "bold")) + xlab("")
+
+```
+```{r, include=FALSE}
+PR_30 <- ggplot() + geom_blank()+
+  theme( axis.text = element_text(size = 10, face = "bold"),axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.ticks.x = element_blank(), plot.title = element_text(hjust = 0.5), panel.border = element_rect(colour = "black", fill = NA, size = 1), panel.background = element_rect(fill='transparent'), plot.background = element_rect(fill='transparent', color=NA), panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(), legend.background = element_rect(fill='transparent'), legend.box.background = element_rect(fill='transparent')) + ggtitle("Pilot Research") +theme(plot.title = element_text(size =10 , face = "bold"))+ xlab("")
+
+
+E_30 <- ggplot() + geom_blank()+
+  theme(axis.text = element_text(size = 4, face = "bold"), axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.ticks.x = element_blank(), plot.title = element_text(hjust = 0.5), panel.border = element_rect(colour = "black", fill = NA, size = 1), panel.background = element_rect(fill='transparent'), plot.background = element_rect(fill='transparent', color=NA), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), legend.background = element_rect(fill='transparent'), legend.box.background = element_rect(fill='transparent')) + ggtitle("Extraversion")+theme(plot.title = element_text(size =10 , face = "bold")) + xlab("")
+
+```
+```{r, include=FALSE}
+AC_30 <- ggplot() + geom_blank()+
+  theme( axis.text = element_text(size = 10, face = "bold"),axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.ticks.x = element_blank(), plot.title = element_text(hjust = 0.5), panel.border = element_rect(colour = "black", fill = NA, size = 1), panel.background = element_rect(fill='transparent'), plot.background = element_rect(fill='transparent', color=NA), panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(), legend.background = element_rect(fill='transparent'), legend.box.background = element_rect(fill='transparent')) + ggtitle("Avoidance coping") +theme(plot.title = element_text(size =10 , face = "bold"))+ xlab("")
+
+
+
+H_30 <- plot_model(s30_lm, type="pred", terms="H [all]") +
+  geom_vline(xintercept = mean(key_data$H), linetype='dashed', color='grey', size=2) + geom_path(color = 'cyan3', alpha = 2)+ theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(face="bold"))+ labs(x="",y=expression('S'^'G30'), title = "H- Index")+theme( axis.text = element_text(size = 8, face = "bold")) +theme(legend.position="none", axis.ticks = element_blank())
+
+```
+```{r, include=FALSE}
+DS_30 <- effect_plot(s30_lm, pred = DS,colors=c("grey", "darkgoldenrod2") ,cat.interval.geom = c( "linerange"))+theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 10,face="bold"))+labs(x="",y="", title = "Deadline Stress")+scale_x_discrete(breaks=c(1,2),labels=c("DS1","DS2"))+theme(legend.position="none", axis.ticks = element_blank())+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+
+
+TA_30 <- plot_model(s30_lm, type="pred", terms="TA [all]") +
+  geom_vline(xintercept = mean(key_data$TA), linetype='dashed', color='grey', size=2) + 
+  geom_path(color = 'cyan3', alpha =2)+theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 10,face="bold"))+labs(x="",y="", title = "Trait Anxiety")+theme(legend.position="none", axis.ticks = element_blank())+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+
+#SG50
+
+```
+```{r, include=FALSE}
+NP_50 <- effect_plot(s50_lm, pred = NP, colors=c("grey","darkgoldenrod2","red"), cat.interval.geom = c( "linerange")) +theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 7,face="bold"))+labs(x="",y=expression('S'^'G50'), title = "")+ scale_x_discrete(breaks=c(1,2,3),labels=c("NP1","NP2","NP3"))+ scale_y_continuous(labels = scales::percent_format(), limits=c(0,1))+
+  theme( axis.text = element_text(size = 8, face = "bold")) +theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.ticks = element_blank())
+
+
+
+FA_50 <- effect_plot(s50_lm, pred = FA,colors=c("grey","black","black", "cyan3", "black", 'darkgoldenrod2'), cat.interval.geom = c( "linerange")) + theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 9,face="bold"))+labs(x="",y="", title = "")+scale_x_discrete(breaks=c(1,2,3,4,5,6),labels=c("NSF","NIH","DOE","DOD","NASA","OT"))+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+
+
+BF_50 <- effect_plot(s50_lm, pred = BF,colors=c("grey","cyan3"), cat.interval.geom = c( "linerange")) + theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 9,face="bold"))+labs(x="",y="", title = "")+scale_x_discrete(breaks=c(1,2),labels=c("BF1","BF2"))+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+
+PR_50 <- effect_plot(s50_lm, pred = PR,colors=c("grey","cyan3", "darkgoldenrod2", "cyan3", 'cyan3'), cat.interval.geom = c( "linerange")) + theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 9,face="bold"))+labs(x="",y="", title = "")+scale_x_discrete(breaks=c(1,2,3,4,5),labels=c("PR1","PR2","PR3", "PR4","PR5"))+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+
+```
+```{r, include=FALSE}
+H_50 <- plot_model(s50_lm, type="pred", terms="H [all]") + geom_vline(xintercept = mean(key_data$H), linetype='dashed', color='grey', size=2) +
+  geom_path(color = 'darkgoldenrod2', alpha = 2)+ theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(face="bold"))+ labs(x="",y=expression('S'^'G50'), title = "")+ theme( axis.text = element_text(size = 8, face = "bold")) +theme(legend.position="none", axis.ticks = element_blank())
+
+
+
+E_50 <- plot_model(s50_lm, type="pred", terms=c('E')) + geom_vline(xintercept = mean(key_data$E), linetype='dashed', color='grey', size=2)+
+  geom_path(color = 'darkgoldenrod3', alpha = 2)+theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 7,face="bold"))+labs(x="",y="", title = "")+theme(legend.position="none", axis.ticks = element_blank())+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+
+
+
+AC_50 <- plot_model(s50_lm, type="pred", terms="AC [all]") + geom_vline(xintercept = mean(key_data$AC), linetype='dashed', color='grey', size=2) +
+  geom_path(color = 'cyan3', alpha = 2) +theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 7,face="bold"))+labs(x="",y="", title = "")+theme(legend.position="none", axis.ticks = element_blank())+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+
+
+
+DS_50 <- ggplot() + geom_blank()+
+  theme(axis.text = element_text(size = 4, face = "bold"), axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.ticks.x = element_blank(), plot.title = element_text(hjust = 0.5), panel.border = element_rect(colour = "black", fill = NA, size = 1), panel.background = element_rect(fill='transparent'), plot.background = element_rect(fill='transparent', color=NA), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), legend.background = element_rect(fill='transparent'), legend.box.background = element_rect(fill='transparent')) + ggtitle("")+theme(plot.title = element_text(size =10 , face = "bold")) + xlab("")
+
+
+
+TA_50 <- ggplot() + geom_blank()+
+  theme( axis.text = element_text(size = 10, face = "bold"),axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.ticks.x = element_blank(), plot.title = element_text(hjust = 0.5), panel.border = element_rect(colour = "black", fill = NA, size = 1), panel.background = element_rect(fill='transparent'), plot.background = element_rect(fill='transparent', color=NA), panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(), legend.background = element_rect(fill='transparent'), legend.box.background = element_rect(fill='transparent')) + ggtitle("") +theme(plot.title = element_text(size =10 , face = "bold"))+ xlab("")
+```
+```{r, include=FALSE}
+#SG75
+
+FA_75 <- effect_plot(s75_lm, pred = FA,colors=c('grey', 'black', 'cyan3', 'darkgoldenrod2', 'black', 'black'),
+                      cat.interval.geom = c( 'linerange'))  + theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 10,face="bold"))+labs(x="",y=expression('S'^'$75'), title = "Funding Agency")+ scale_x_discrete(breaks=c(1,2,3,4,5,6),labels=c("NSF","NIH","DOE","DOD","NASA","OT"))+ scale_y_continuous(labels = scales::percent_format(), limits=c(0,1))+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.ticks = element_blank())+easy_center_title()
+
+  
+TS_75 <- effect_plot(s75_lm, pred = T, colors=c('grey','cyan3'),cat.interval.geom = c( 'linerange')) + 
+  theme_linedraw()+ theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 10,face="bold"))+labs(x="",y="", title = "Time of Submission")+ scale_x_discrete(breaks=c(1,2),labels=c("TS1","TS2"))+theme(axis.text = element_text(size = 8, face = "bold"))+
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()
+
+  
+TWR_75 <- plot_model(s75_lm, type="pred", terms=c('TWR')) + geom_vline(xintercept = mean(key_data$TWR), 
+                      linetype='dashed', color='grey', size=2) + geom_path(color = 'darkgoldenrod3', alpha = 2) +
+  theme_linedraw()+ theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+                          plot.title = element_text(size = 10,face="bold"))+labs(x="",y="", title = "Typical Week Reseach")+theme(axis.text = element_text(size = 8, face = "bold"))+
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()
+
+  
+H_75 <- plot_model(s75_lm,type="pred", terms="H [all]", axis.title = c(" ","S$75")) +
+  geom_vline(xintercept = mean(key_data$H), linetype='dashed', color='grey', size=2) + geom_path(color = 'cyan3', alpha = 2) +
+theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 10,face="bold"))+labs(x="",y=expression('S'^'$75'), title = "h-index")+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.ticks = element_blank())+easy_center_title()
+  
+  
+RS_75 <- effect_plot(s75_lm, pred = RS, x.label = '', y.label = '', colors=c("grey","cyan3"),cat.interval.geom = c( "linerange")) + 
+  theme_linedraw()+ theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),plot.title = element_text(size = 10,face="bold"))+
+  labs(x="",y="", title = "Research Style")+ scale_x_discrete(breaks=c(1,2),labels=c("RS1","Rs2"))+theme(axis.text = element_text(size = 8, face = "bold"))+
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()
+
+```
+```{r, include=FALSE}
+O_75 <- plot_model(s75_lm, type="pred", terms=c('O')) + 
+  geom_vline(xintercept = mean(key_data$O), linetype='dashed', color='grey', size=2) + geom_path(color = 'cyan3', alpha = 2) + 
+  theme_linedraw()+ theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),plot.title = element_text(size = 10,face="bold"))+
+  labs(x="",y="", title = "Openness")+ theme(axis.text = element_text(size = 8, face = "bold"))+
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()
+  
+  
+  
+#SGDD
+
+FA_dd <- effect_plot(sdd_lm, x.label = '', y.label = 'S$$', pred = FA,colors=c("grey","black","black", "red", "black", 'black'), cat.interval.geom = c( "linerange"))+ 
+  theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 10,face="bold"))+labs(x="",y=expression('S'^'$$'), title = "")+ scale_x_discrete(breaks=c(1,2,3,4,5,6),labels=c("NSF","NIH","DOE","DOD","NASA","OT"))+ scale_y_continuous(labels = scales::percent_format(), limits=c(0,1))+theme( axis.text = element_text(size = 8, face = "bold")) +
+  theme(legend.position="none", axis.ticks = element_blank())+easy_center_title()
+
+  
+  
+TS_dd <-  ggplot() + geom_blank()+
+  theme( axis.text = element_text(size = 10, face = "bold"),axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.ticks.x = element_blank(), plot.title = element_text(hjust = 0.5), panel.border = element_rect(colour = "black", fill = NA, size = 1), panel.background = element_rect(fill='transparent'), plot.background = element_rect(fill='transparent', color=NA), panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(), legend.background = element_rect(fill='transparent'), legend.box.background = element_rect(fill='transparent')) + ggtitle("") +theme(plot.title = element_text(size =10 , face = "bold"))+ xlab("")
+  
+  
+RS_dd <-  ggplot() + geom_blank()+
+  theme( axis.text = element_text(size = 10, face = "bold"),axis.ticks.y = element_blank(), axis.text.y = element_blank(), axis.ticks.x = element_blank(), plot.title = element_text(hjust = 0.5), panel.border = element_rect(colour = "black", fill = NA, size = 1), panel.background = element_rect(fill='transparent'), plot.background = element_rect(fill='transparent', color=NA), panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(), legend.background = element_rect(fill='transparent'), legend.box.background = element_rect(fill='transparent')) + ggtitle("") +theme(plot.title = element_text(size =10 , face = "bold"))+ xlab("")
+  
+```
+```{r, include=FALSE}
+H_dd <- ggplot() + geom_blank()+ ylab('S$$') +
+  theme( axis.ticks.y = element_blank(), axis.ticks.x = element_blank(), plot.title = element_text(hjust = 0.5), panel.border = element_rect(colour = "black", fill = NA, size = 1), panel.background = element_rect(fill='transparent'), plot.background = element_rect(fill='transparent', color=NA), panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(), legend.background = element_rect(fill='transparent'), legend.box.background = element_rect(fill='transparent'))  + xlab("")+ scale_y_continuous(labels = scales::percent_format(), limits = c(0, 1)) +theme( axis.text = element_text(size = 8, face = "bold"))
+
+TWR_dd <- plot_model(sdd_lm,type="pred",title = '', terms=c('TWR')) + 
+  geom_vline(xintercept = mean(key_data$TWR), linetype='dashed', color='grey', size=2) + geom_path(color = 'red', alpha = 2) + theme_linedraw()+ theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),plot.title = element_text(size = 10,face="bold"))+
+  labs(x="",y="", title = "")+theme(axis.text = element_text(size = 8, face = "bold"))+
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()
+
+
+
+O_dd <- plot_model(sdd_lm,type="pred", terms=c('O'), title = '') +
+  geom_vline(xintercept = mean(key_data$O), linetype='dashed', color='grey', size=2) + geom_path(color = 'cyan3', alpha = 2)+ theme_linedraw()+ theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),plot.title = element_text(size = 10,face="bold"))+
+  labs(x="",y="", title = "")+theme(axis.text = element_text(size = 8, face = "bold"))+
+  theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+easy_center_title()
+
+```
+```{r, include=FALSE}
+# S50DD
+
+NP_50dd <- effect_plot(s50dd_lm, pred =NP,colors=c('grey', 'darkgoldenrod2', 'darkgoldenrod2'),
+                        cat.interval.geom = c( 'linerange'))+theme_linedraw()+
+  theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 7,face="bold"))+labs(x="",y="S50$$", title = "Number of Proposals") +
+ scale_x_discrete(breaks=c(1,2,3),labels=c("NP1","NP2","NP3"))+ scale_y_continuous(labels = scales::percent_format(), limits=c(0,1))+theme( axis.text = element_text(size = 8, face = "bold"))+ theme(legend.position="none", axis.ticks = element_blank())
+```
+```{r, include=FALSE}
+TWR_50dd <- plot_model(s50dd_lm,type="pred", terms=c('TWR')) + 
+  geom_vline(xintercept = mean(key_data$TWR), linetype='dashed', color='grey', size=2) + geom_path(color = 'darkgoldenrod3', alpha = 2) +
+  theme_linedraw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),plot.title = element_text(size=7,face="bold"))+
+  labs(x="", y="", title = "Typical Week Research")+theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+theme(axis.text = element_text(size = 8, face = "bold"))+easy_center_title()
+  
+  
+E_50dd <- plot_model(s50dd_lm,type="pred", terms=c('E')) + 
+  geom_vline(xintercept = mean(key_data$E), linetype='dashed', color='grey', size=2) + geom_path(color = 'cyan3', alpha = 2) +
+theme_linedraw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),plot.title = element_text(size=7,face="bold"))+
+  labs(x="", y="", title = "Extraversion")+theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+ theme(axis.text = element_text(size = 8, face = "bold"))+easy_center_title()
+
+
+A_50dd <- plot_model(s50dd_lm,type="pred", terms=c('A')) +
+  geom_vline(xintercept = mean(key_data$A), linetype='dashed', color='grey', size=2) + geom_path(color = 'cyan3', alpha = 2) +
+  theme_linedraw()+theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),plot.title = element_text(size=7,face="bold"))+
+  labs(x="", y="", title = "Agreeableness")+theme(legend.position="none", axis.text.y = element_blank(), axis.ticks = element_blank())+ theme(axis.text = element_text(size = 8, face = "bold"))+easy_center_title()
+
+
+x_values <- c('a','b','c','d')
+y_values <- c(1, 2, 3, 4)
+significant_values <- c("*", "**", "***", "***")
+legend_data_frame <- data.frame(x_values, y_values, significant_values)
+```
+```{r, include=FALSE}
+
+
+
+legend <- ggplot(data = legend_data_frame) + geom_line(aes(x = x_values, y = y_values, group= significant_values, color = significant_values)) + scale_colour_manual(values = c("cyan3", "darkgoldenrod2", "red")) +
+  theme_linedraw() + theme(plot.title = element_text(size = 10, face = "bold"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.position="bottom", axis.text.y = element_blank(), axis.ticks = element_blank(), legend.key.width= unit(2, 'cm'), legend.text = element_text(size=15), legend.spacing.x = unit(1.0, 'cm'), legend.title.align = 0.5) +
+  labs(x = "", y = "", title = "") + easy_center_title()
+
+
+
+d <- get_legend(legend)
+
+grid_1 <- grid.arrange(NP_30, FA_30,BF_30,PR_30, NP_50, FA_50, BF_50, PR_50, ncol=4, nrow = 2)
+
+
+
+
+grid_2 <- grid.arrange(H_30 ,H_50, ncol=1, nrow = 2)
+
+
+
+
+grid_3 <- grid.arrange(DS_30, TA_30, E_30, AC_30, DS_50,TA_50, E_50, AC_50, ncol=4, nrow = 2)
+
+
+
+
+Gridmerge_1 <- plot_grid(grid_1, d, nrow = 2, rel_heights = c(1, .05), labels = c ("a"))
+
+
+
+
+
+Gridmerge_2 <- plot_grid(grid_2, grid_3, rel_widths = c(0.75, 2), ncol = 2, labels = c("b", "c"))
+
+
+
+
+Mega_Figure <- plot_grid(Gridmerge_1, Gridmerge_2,
+                  nrow = 2) + annotation_custom(grid.polygon(
+                    x = c(0, 0.5, 1, 0.275, 0.275),
+                    y = c(0.5, 0.5, 0.5, 0, 0.5),
+                    id = c(1, 1, 1, 2, 2),
+                    gp = gpar(lwd = 1.5))) + annotation_custom(grid.polygon(
+                      # c(0, 0.25, 1, 1, 1),
+                      y = c(0.525, 0.525, 0.525, 0.525),
+                      id = NULL,
+                      gp = gpar(lwd = 1.5)))
+
+grid_4 <- grid.arrange(FA_75, TS_75, TWR_75, FA_dd, TS_dd, TWR_dd, ncol = 3, nrow = 2)
+
+
+
+grid_5 <- grid.arrange(H_75, RS_75, H_dd, RS_dd, ncol = 2, nrow = 2)
+
+
+
+grid_6 <- grid.arrange(O_75,O_dd, ncol=1, nrow = 2)
+
+
+
+
+Gridmerge_4 <- plot_grid(grid_4, d, nrow = 2, rel_heights = c(1, .05))
+
+
+
+Gridmerge_5 <- plot_grid(grid_5, grid_6, rel_widths = c(2, 1), ncol = 2, labels = c("b", "c"))
+
+
+
+
+
+fig3 <- plot_grid(Gridmerge_4,
+                  Gridmerge_5,
+                  nrow = 2,
+                  labels = c("a", "")) + annotation_custom(grid.polygon(
+                    x = c(0, 0.5, 1, 0.67, 0.67),
+                    y = c(0.5, 0.5, 0.5, 0, 0.5),
+                    id = c(1, 1, 1, 2, 2),
+                    gp = gpar(lwd = 1.5))) + annotation_custom(grid.polygon(
+                      # c(0, 0.25, 1, 1, 1),
+                      y = c(0.525, 0.525, 0.525, 0.525),
+                      id = NULL,
+                      gp = gpar(lwd = 1.5)))
+Gridmerge_7 <- grid.arrange(NP_50dd,TWR_50dd,E_50dd,A_50dd, ncol = 4)
+
+fig4 <- plot_grid(Gridmerge_7, d, nrow = 2, rel_heights = c(1, 0.5))
+```
+# Regression Tables:  Full models and Optimized models with Inferences:  
+
+## Parameter estimates for the Successful Grantsmanship configuration SG30:  
+### Full model and its AIC
+```{r echo = FALSE}
+s30_first
+```
+
+### Optimized -Model:  
+```{r echo=FALSE, out.width='100%'}
+knitr::include_graphics('/Users/ndine/OneDrive/Documents/s30.png')
+```
+
+## Inferences  
+
+### Forward Model:  
+1. Starts with null model and its AIC is 424.93  
+2. Out of all the predictors, checked and kept only significant terms from the null model - NP FA TA H. These predictors has p-value less than 0.05.     
+3. DS is key predictor for grantsmanship. So, By adding DS, model became more optimized with AIC - 426.38  
+
+### Step-wise:  
+1. Initial AIC is 424.93. Although we have low AIC value, we can non significant terms - DS RS TS DWH.  
+2. When removed all the non significant terms, AIC value increased to 431.53. To further improve the model, tried different combinations and found that, AIC value is again dropping when DS is added to the model.   
+3. So, with all the significant terms, AIC of the model is 426.38  
+
+### Backward Model:  
+1. Starts with full model and AIC is 449.97.   
+2. Checked and removed non significant predictors with p-values greater than 0.05 and kept only significant terms - NP FA TA H DS.  
+3. With all the significant predictors whose p value is less than 0.05, model AIC value is 426.38  
+
+## Parameter estimates for the Successful Grantsmanship configuration SG50: 
+### Full model and its AIC
+```{r echo = FALSE}
+s50_first
+```
+### Optimized -Model:  
+```{r echo=FALSE, out.width='100%'}
+knitr::include_graphics('/Users/ndine/OneDrive/Documents/s50.png')
+```
+
+## Inferences:  
+
+### Forward Model:  
+1. Starts with null model and its AIC value is 304.31  
+2. Predictors with p-value less than 0.05 are - NP FA BF PR E H AC and DS.  
+3. By adding only significant predictors, whose p-value is less than 0.05, model is now optimized with AIC - 305.07.  
+
+### Step-wise:  
+1. Initial AIC value is 304.31 but has TC as non significant predictor.   
+2. After removing, AIC value is now 305.07 with all significant terms.   
+
+### Backward Model:  
+1. Starts with full model and its AIC is 324.13 but with TC as non significant term.  
+2. When removed, model got better with all significant terms and AIC- 305.07  
+
+
+
+## Parameter estimates for the Well-Funded Configuration S$75:  
+
+### Full model and its AIC
+```{r echo = FALSE}
+s75_first
+```
+
+### Optimized -Model:  
+```{r echo=FALSE, out.width='100%'}
+knitr::include_graphics('/Users/ndine/OneDrive/Documents/s75.png')
+```
+
+## Inferences:  
+
+### Forward Model:  
+1. Starts with null model and AIC is 530.29  
+2. From the null model, kept significant terms which are less than 0.05- FA RS TS WH E TWR.  
+3. Model's AIC is 536.2 with non significant terms like WH. Model is still not optimized.     
+4. As there are still non significant term E, We are considering all other predictors except E and checking AIC.
+5. AIC is now 535.55  
+6. PR - 542.75, TA - 535.02, 535.86. Out of all combinations, adding H(as H is the key predictor of grantsmanship) significant term, AIC if further dropped to 531.61  
+
+### Step-wise:  
+1. Initial model AIC is 530.29 with non significant terms.  
+2. After removing all the non significant that are significantly greater than 0.05 and keeping only significant terms, AIC value slightly increased to 530.56  
+3. E and O are slightly greater than 0.05. When removed O, we are getting AIC as 531.92  
+4. As E is slightly greater than 0.05 and evidence shows that many scholars are introverted, we removed E and optimized model.  
+5. Final AIC of the model is 531.61 with all significant predictors.   
+
+### Backward Model:  
+1. Starts with full model and its AIC 557.53  
+2. We got AIC as 530.56 when removed predictors with p-value significantly greater than 0.05.  
+3. As we have two predictors with slightly greater than 0.05, when both are removed AIC is increasing to 533.54  
+4. Out of two, When O is removed, AIC is again decreased to  531.92. But when E is removed, we are getting optimized model with AIC as 531.61 with all significant predictors.   
+
+## Parameter estimates for the Fully-Funded Configuration S$$:  
+
+### Full model and its AIC
+```{r echo = FALSE}
+sdd_first
+```
+### Optimized -Model:  
+```{r echo=FALSE, out.width='100%'}
+knitr::include_graphics('/Users/ndine/OneDrive/Documents/sdd.png')
+```
+
+## Inferences:  
+
+### Forward Model:  
+1. Starts with null model and its AIC is 404.88  
+2. Significant predictors found are: FA PR O TWR. With these predictors, model AIC is 408.64.  
+3. As PR can be burden and often misused, we should not add PR for the forward model, surprisingly model is more optimized with AIC decreased to 406.73  
+
+### Step-wise:  
+1. Initial mode aic is 404.88 with many non significant predictors.  
+2. Removing them made model optimized with AIC 406.73 with only significant predictors.   
+
+### Backward Model:  
+1. Starts with full model and its AIC is 434.39 and non significant predictors - TC.  
+2. After removing it, model is optimized with AIC 406.73  
+
+## Parameter estimates for the Combined Grantsmanship and Grant Funding Configuration SG50$$:  
+### Full model and its AIC
+```{r echo = FALSE}
+s50dd_first
+```
+### Optimized -Model:  
+```{r echo=FALSE, out.width='100%'}
+knitr::include_graphics('/Users/ndine/OneDrive/Documents/s50dd.png')
+```
+## Inferences:  
+
+### Forward:  
+1. Starts with null mode and its AIC - 159.83  
+2. Keeping only significant predictors - NP FA PR E A TWR. AIC increased to 163.81    
+3. AS most of the Funding agencies and PR are greater than 0.05, we should not consider them for forward model. Model is further optimized with AIC-160.95 with all of the predictors are significant.
+
+### Step-wise:  
+1. Initial model AIC - 159.83 with RS and O as non significant predictors.  
+2. By removing the non significant predictors, model is optimized with AIC - 160.95  
+
+### Backward Model:  
+1. Full model AIC - 186.77 with RS and O as non significant predictors.  
+2. By removing the non significant predictors, model is optimized with AIC - 160.95  
+
+```{r, echo = FALSE, fig.align = "center", fig.height = 8, fig.width = 8, out.width = "7 in"}
+Mega_Figure
+fig3
+fig4
+```
+
+### Inferences from the plots:   
+**-->** Faculty included in the sample has 32.5 female(272) and 67.5% Male(131) while the population in NCSES has 64.8% male and 35.2 female. When performed chi square on these vectors we got p value as 0.2735 which is greater than 0.05. As the p-value is greater than 0.05, we do not reject null hypothesis sample gender distribution is independent of the gender distribution of US academia.   
+**-->** SG30 and SG50 are successful of grantsmanship. SG30 consists of the respondents who estimate their success rate to be more than 30% (Successful) while SG50 consists of people with success rate more than 50% (Highly successful).  
+###SG30  
+**-->** Reference researcher is the one who submits 1-2 proposals to NSF and experience no stress. Grey bars falls under the category of RRG30(reference researcher).  
+**-->** As the number proposals increases, the probability for faculty to belong to the most successful class (SG30) decreases. This is concluded by looking at the graphs of Number of proposals of Sg30. Faculty that publishes 1-2 proposals have around 55% probability to fall under successful class category.  Also, probability falls from somewhere around 55%(NP1) to below 25%(NP3).   
+**-->** From funding agency, Reference researcher has around 50% probability of being in successful group. The p-value for NSF is greater than 0.05, so we can accept null that they have highest probability of being in successful class. Also,  we can say that NIH, DOE and NASA groups are almost equal to successful class group, they are represented by black bars with p-value > 0.05 (accept null and are in high probability of being in successful class). While DOD and OT have high probability to match the reference researcher who falls under successful class and these are represented with gold bars with p-value < 0.01 (as it is less than 0.05, reject null and conclude that they have least chance of being in successful group). As the number of submissions are higher for DOD and OT, so, approval of proposal is less.    
+**-->** H-index represents the academic fame of the faculty. SG30 h-index shows that the faculty belonging to the successful class is increasing and it is increasing by approximately 8%. The p-value for this model is less than 0.05(blue bar) so, we can reject null and conclude the more is the academic fame, the more is the chance of being in successful group.    
+**-->**From deadline stress graph, it clearly says that faculty who experience stress have low probability of making it to the successful class. DS2 represents faculty with more stress and they have less probability of matching with RRG30. SO, they are represented with gold bars, also they have p-value < 0.01. As the DS-2 p-value is less than 0.05, we can reject the null and conclude the more is the stress, the less is the probability of being in successful class.     
+**-->** Based on the trait anxiety scores recorded, SG30 faculty chances of matching with reference researcher is decreasing and is also shown in the graph. The probability is dropped from somewhere around 60% to 50%.p- value for this model is less than 0.05 so we can reject null and conclude that the more is the trait anxiety score, the less the probability of being in successful group.    
+###SG50  
+**-->** Reference researcher for RRg50 is the one who submits 1-2 proposals every year and submits to NSF, also takes 1-2 hours of break everyday, conducts pilot research less than 1 month. Adding to this, reference research is also inclined towards extroversion with score 6/10 and 18.8/33 as avoidance coping score.  
+**-->** From the graph of Number of proposals of SG50 faculty, it shows that faculty has probability of slightly more than 50% to belong to successful class.  
+**-->** Same as in SG30, faculty here in SG50 have low probability to be in successful class as their number of proposals increases.The probability decreases from around 50%(NP1) to around 3%(NP3). p-value for NP3 is less than 0.001 which is obviously less than 0.05, we can reject null and conclude that the number of proposals is more, the chance of being in successful group is less.    
+**-->** By the graph of funding agency of SG50, The probability of reference researcher being in successful class in almost 50% and p value is grater than 0.05, we can accept null and conclude that the less number of proposals gives the more chance of approval by the agency. we can conclude that NIH, DOE and NASA are almost equal with faculty of successful class. While, DOD and OT gave probability of around 25% and 30% respectively. Application are more to OT, so approval from the agency is less. We are concluding this by OT's p value which is less than 0.01 by rejecting null.    
+**-->** From the graph of break frequency, we can conclude that faculty taking breaks 3-4 hours everyday(BF-1) have low probability around 50% with p-value > 0.05 than BF-2 with probability around 75% with p-value less than 0.05.  
+**-->** In SG50, faculty with less pilot research (PR1) has high change of being in successful group while faculty with more pilot research(PR5) gave less chance if being in successful group. High pilot research faculty has only 25% of probability to be in successful group. PR1 has p-value greater than 0.05, we can accept null and conclude that the less pilot research is the more chance of being in successful group.   
+**-->** The probability of being in successful class based on h-index (academic face) in increased by 10% for SG50 faculty. The more academic fame (h-index), the higher is probability of being successful. The p-value here is less than 0.01, which is less than 0.05, we can reject null and conclude that the more the fame, the more the chance of being in successful group.      
+**-->** In SG50 faculty, faculty with increasing extroversion score having lower probability to be in successful class. p value is less than 0.01, reject null.    
+**-->** The more the avoidance coping factor, the more probability of being in successful group. This is purely in contradiction to the extroversion. p-value is less than 0.05, reject null.    
+
+**-->**Faculty who estimated their grant funding more than 75% of the total cost as considered to be in S$75 group. These are well funded research operations.  
+**-->** Faculty who estimated full funding are for their research are considered and categorized in Sdd(dollar dollar) group. These are full funded research operations.  
+###S$75
+**-->** Reference researcher submits proposals to NSF, submits only on deadlines and invests 42.5% of time to research and has 29.6 has h-index. researcher doesn't do hands-on and they have openness score 7.5/10.  
+**-->** NIH, NASA and OT groups are in almost in match with the faculty of successful groups. Their p-value is > 0.05 with black bars. While DOD and DOE have probabilities of around 28% each to be in successful group. Reference researcher has more than 50% probability and have p value greater than 0.05.so, accept null.      
+**-->** Faculty who submit their proposals on the deadline have higher probability of being in successful group than the faculty who submits early than the deadline. So, the more time they spend before the submission have higher probability of being in successful group. TS1 has p-value greater than 0.05, accept null and conclude that the more time they spend on research gives them more probability of being in successful group.    
+**-->** TWR graph is increasing. This suggests that the more time they spent on research gives them more chance of being in successful group. p-value is less than 0.01, which is less than 0.05, so reject null.    
+**-->** Same like Sg30 and Sg50, the increase in h-index score(academic fame) the more is the probability of being in successful group. The increase in the h-index of 0-around 55, the probability increased from 50-60%.p- value is less than 0.05, so, reject null and conclude that academic fame brings them more chance of being in successful group.   
+**-->**) This is quite shocking, faculty with no hands-on research style has higher probability of being in successful group.  
+**-->** The more openness to varieties in research leads to lower probability of being in successful group.  The increase the score in openness, the lower is the chance of being successful.  
+###S$$  
+
+**-->**  Reference researcher here submits proposals to NSF and devotes 42.1% of their time to research. And has openness core of 7.5/10.  
+**-->** according to Funding agency graph, The probability of reference research to be in successful graph is only 17%. NIH, DOE, NASA and OT groups are in accordance with reference researcher while DOD has lowest chance of being in successful group with p-value less than 0.001 with red bars.  
+**-->** The more the amount of time they spend on research gives more probability of being in successful group.  
+**-->** The more they are open, the less is the chance of being in successful group. As the openness score increase from 6-10, the probability decreases from 25 to 17%.  
+###SG50$$  
+
+**-->** The faculty who predicts their grantsmanship above 50% are considered to be in SG50dd group. They are considered as Reference highly successful in grantsmanship and well-funded researcher.  
+**-->** Reference researcher here submits 1-2 proposals per year and devotes 42.1% of their time to research. And has extroversion score and agreeableness score of 6 and 7.5 respectively.  
+**-->** Reference researcher belonging to successful group is around 10%. Same as other faculty, as the number of proposals increases, the probability of being in successful group decreases.  
+**-->** As the time they spend on research increases, the probability of making into successful group increases.  
+**-->** From the extraversion graph, As the faculty score of extraversion score increases, the probability of being in successful group decreases. Probability dropped from 15% TO 5% when the score increases from 4-8.  
+**-->** The probability of being in successful group increases by 6% approximately when agreeableness score increases form 6-10. 

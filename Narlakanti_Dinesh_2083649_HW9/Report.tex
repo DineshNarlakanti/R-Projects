@@ -1,0 +1,199 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\author{}
+\date{\vspace{-2.5em}}
+
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\begin{document}
+
+\hypertarget{statistical-methods-cosc-6323---home-work-9}{%
+\section{Statistical Methods -- COSC 6323 -
+Home-Work-9}\label{statistical-methods-cosc-6323---home-work-9}}
+
+\hypertarget{by-dinesh-narlakanti-2083649}{%
+\subsubsection{By Dinesh Narlakanti
+(2083649)}\label{by-dinesh-narlakanti-2083649}}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{introduction}{%
+\subsubsection{INTRODUCTION}\label{introduction}}
+
+Students are divided into two groups and they are given an online talk
+about an essay they wrote to a panel of three examiners. The Not
+Informed (NI) group of students were not informed about the possibility
+of giving a talk, while the Informed (I) group received notice already.
+
+This document majorly focuses on:\\
+i) Whether judges emotion influence the emotion of the participants.\\
+ii) Is there any difference of showcasing emotions between informed
+people and non informed people.\\
+iii) While the stress increasing, whether the emotion is increasing or
+decreasing.\\
+iv) While the agreeableness of the judges increases, whether emotion of
+the participants increasing or decreasing.
+
+\hypertarget{graphs}{%
+\subsubsection{GRAPHS}\label{graphs}}
+
+\begin{verbatim}
+## Data were 'prettified'. Consider using `terms="delta_pp_mean [all]"` to get smooth plots.
+\end{verbatim}
+
+\includegraphics{Report_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\hypertarget{summary}{%
+\subsubsection{SUMMARY}\label{summary}}
+
+\begin{verbatim}
+## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: F_SumEmoBinary ~ (J_SumEmoBinary * Group) + (J_SumEmoBinary *  
+##     delta_pp_mean) + (J_SumEmoBinary * BFI_Agreeableness) + (1 |  
+##     (Participant_ID))
+##    Data: mimicry
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##   4441.7   4501.0  -2211.9   4423.7     5310 
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -12.1280  -0.3830   0.1998   0.4976   4.5653 
+## 
+## Random effects:
+##  Groups           Name        Variance Std.Dev.
+##  (Participant_ID) (Intercept) 3.708    1.926   
+## Number of obs: 5319, groups:  (Participant_ID), 38
+## 
+## Fixed effects:
+##                                    Estimate Std. Error z value Pr(>|z|)    
+## (Intercept)                       -9.421428   2.208761  -4.265 1.99e-05 ***
+## J_SumEmoBinary1                   -0.713588   0.551538  -1.294 0.195729    
+## GroupI                            -1.412849   0.488317  -2.893 0.003812 ** 
+## delta_pp_mean                      6.028473   1.662212   3.627 0.000287 ***
+## BFI_Agreeableness                  0.268834   0.054639   4.920 8.65e-07 ***
+## J_SumEmoBinary1:GroupI             0.394072   0.163330   2.413 0.015833 *  
+## J_SumEmoBinary1:delta_pp_mean      0.510327   0.503172   1.014 0.310478    
+## J_SumEmoBinary1:BFI_Agreeableness  0.009691   0.014219   0.682 0.495525    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr) J_SmEB1 GroupI dlt_p_ BFI_Ag J_SEB1:G J_SEB1:_
+## J_SmEmBnry1 -0.146                                               
+## GroupI      -0.543 -0.032                                        
+## delta_pp_mn -0.381  0.106   0.250                                
+## BFI_Agrblns -0.942  0.144   0.404  0.112                         
+## J_SmEmB1:GI -0.016  0.086  -0.202  0.019  0.045                  
+## J_SmEmB1:__  0.088 -0.614   0.027 -0.173 -0.055 -0.100           
+## J_SEB1:BFI_  0.138 -0.932   0.069 -0.064 -0.157 -0.261    0.368  
+## optimizer (Nelder_Mead) convergence code: 0 (OK)
+## Model failed to converge with max|grad| = 0.0258967 (tol = 0.002, component 1)
+## Model is nearly unidentifiable: large eigenvalue ratio
+##  - Rescale variables?
+\end{verbatim}
+
+\hypertarget{observation-and-inferences}{%
+\subsubsection{OBSERVATION AND
+INFERENCES}\label{observation-and-inferences}}
+
+\textbf{-\textgreater{}} From (b), Probability of showing emotion falls
+from around 91\% to around 72\% for informed people. So, we can conclude
+that the people who know about the presentation shows less emotion
+during the presentation.
+
+\textbf{-\textgreater{}} From (a), We can deduce that, when judges move
+from neutral state to emotional state, the emotionality probability of
+the participants decreased from around 91\% to around 90\%. As the
+values are in opposite direction, we can say that participants show less
+mimicry with the judges.
+
+\textbf{-\textgreater{}} From (c), When judges are moving from neutral
+to emotional i.e., when judges show emotion, the informed people's
+probability of becoming emotional increased from around 72\% to around
+76\% while probability of emotionality for non informed people decreases
+from around 92\% to around 90\%. By this we can deduce that,
+participants in informed group respond judges' emotions. For non
+informed people, they dont mimic the judges' emotions.
+
+\textbf{-\textgreater{}} From (d), we can clearly see that as the pp
+value (stress) increasing from -0.05 to 1, the emotionality probability
+of the participants also increases. So, higher the strees, higher is the
+chance of showing emotion duting the presentation.
+
+\textbf{-\textgreater{}} From (e), it is obvious that, the higher the
+agreeableness, the higher is the probability of showing emotion of the
+participants during the presentation. As the agreeableness score is
+increasing from 20 to 45, the chance of showing emotion is also
+increasing.
+
+\textbf{-\textgreater{}} Stress of the participants influences their
+expressions. We concluded this by their p-value (0.000287 ) which is
+less than 0.05 and we can reject the null.
+
+\textbf{-\textgreater{}} As p-value of agreeableness is (8.65e-07) which
+is less than 0.05, we can reject null and conclude that agreeableness
+score plays significant role in participants' expression.
+
+\end{document}
